@@ -16,7 +16,7 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: true, // Echo request origin (allows dev & production client easily)
+    origin: process.env.ALLOWED_ORIGIN || process.env.CORS_ORIGIN || true,
     credentials: true
   })
 );

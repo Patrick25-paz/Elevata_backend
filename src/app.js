@@ -14,9 +14,14 @@ const app = express();
 
 // 1. Core Security Middlewares
 app.use(helmet());
+const rawOrigin = process.env.ALLOWED_ORIGIN || process.env.CORS_ORIGIN;
+const origins = rawOrigin
+  ? (rawOrigin.includes(',') ? rawOrigin.split(',').map(o => o.trim()) : rawOrigin)
+  : true;
+
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGIN || process.env.CORS_ORIGIN || true,
+    origin: origins,
     credentials: true
   })
 );

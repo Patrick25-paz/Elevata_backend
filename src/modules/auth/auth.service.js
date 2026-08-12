@@ -6,6 +6,7 @@ import { AppError } from '../../utils/errors.js';
 import { sendEmail } from '../../utils/resend.js';
 
 const verificationStore = new Map();
+const passwordResetStore = new Map();
 
 class AuthService {
   /**
@@ -285,6 +286,134 @@ class AuthService {
     } catch (error) {
       throw new AppError(error.message || 'Token refresh failed.', 401);
     }
+  }
+
+  /**
+   * Generates a 6-digit password reset code and sends it via Resend.
+   * @param {string} email - Recipient email
+   */
+  async sendPasswordResetCode(email) {
+    if (!email) {
+      throw new AppError('Email address is required', 400);
+    }
+
+    // Check if email exists
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      throw new AppError('Email address is not registered', 404);
+    }
+
+    // Generate 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store in-memory
+    passwordResetStore.set(email, {
+      code,
+      expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
+    });
+
+    // Send email using Resend
+    const subject = 'Reset your password - Elevata';
+    const html = `
+      <div style="background-color: #f8fafc; padding: 40px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+        <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 40px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 8px 10px -6px rgba(0, 0, 0, 0.02);">
+          <!-- Logo Branding -->
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://res.cloudinary.com/vamxvage/image/upload/v1786182605/elevata_logo_new_nrtjnj.png" alt="Elevata Logo" style="height: 48px; width: 48px; display: inline-block; vertical-align: middle; margin-right: 10px;" />
+            <span style="font-size: 24px; font-weight: 800; color: #0f74e7; letter-spacing: -0.03em; vertical-align: middle;">Elevata</span>
+          </div>
+          
+          <!-- Title -->
+          <h1 style="font-size: 22px; font-weight: 800; color: #1e293b; text-align: center; margin: 0 0 12px 0; letter-spacing: -0.02em;">Reset your password</h1>
+          
+          <p style="font-size: 15px; color: #64748b; line-height: 1.6; text-align: center; margin: 0 0 32px 0;">
+            We received a request to reset your password. Use the verification code below to complete the reset process.
+          </p>
+          
+          <!-- Code Box -->
+          <div style="background: linear-gradient(135deg, #f0f6ff 0%, #e5f0ff 100%); border: 1px solid #bfdbfe; border-radius: 16px; padding: 24px 20px; text-align: center; margin: 0 0 32px 0;">
+            <div style="font-size: 12px; font-weight: 700; color: #1d4ed8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Your Password Reset Code</div>
+            <div style="font-size: 36px; font-weight: 800; color: #0f74e7; letter-spacing: 8px; font-family: 'SF Pro Mono', Menlo, Monaco, Consolas, monospace; display: inline-block; padding-left: 8px;">
+              ${code}
+            </div>
+          </div>
+          
+          <!-- Warning -->
+          <p style="font-size: 13px; color: #94a3b8; line-height: 1.5; text-align: center; margin: 0 0 40px 0;">
+            This code is active for <strong>10 minutes</strong>. If you did not request a password reset, you can safely ignore this email.
+          </p>
+          
+          <!-- Divider -->
+          <div style="height: 1px; background-color: #f1f5f9; margin-bottom: 24px;"></div>
+          
+          <!-- Footer -->
+          <div style="text-align: center;">
+            <p style="font-size: 12px; color: #94a3b8; margin: 0 0 8px 0; line-height: 1.4;">
+              Need help? Contact our support team at <a href="mailto:voltale360@gmail.com" style="color: #0f74e7; text-decoration: none; font-weight: 600;">voltale360@gmail.com</a>
+            </p>
+            <p style="font-size: 11px; color: #cbd5e1; margin: 0;">
+              &copy; 2026 Elevata. All rights reserved.<br />
+              Kigali, Rwanda
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    try {
+      await sendEmail({ to: email, subject, html });
+    } catch (error) {
+      console.error('Failed to send password reset email:', error);
+      throw new AppError('Failed to send password reset email. Please try again.', 500);
+    }
+
+    return true;
+  }
+
+  /**
+   * Resets the user password after verifying the 6-digit code.
+   * @param {string} email
+   * @param {string} code
+   * @param {string} newPassword
+   */
+  async resetPassword(email, code, newPassword) {
+    if (!email || !code || !newPassword) {
+      throw new AppError('Email, verification code, and new password are required', 400);
+    }
+
+    const resetData = passwordResetStore.get(email);
+    if (!resetData) {
+      throw new AppError('No reset code was sent for this email address', 400);
+    }
+
+    if (resetData.expiresAt < Date.now()) {
+      passwordResetStore.delete(email);
+      throw new AppError('Reset code has expired', 400);
+    }
+
+    if (resetData.code !== code) {
+      throw new AppError('Invalid reset code', 400);
+    }
+
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    // Password strength check
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+    if (!strongPasswordRegex.test(newPassword)) {
+      throw new AppError('Password must be at least 8 characters and contain 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.', 400);
+    }
+
+    // Hash & update password
+    const hashedPassword = await hashPassword(newPassword);
+    await userRepository.update(user.id, { password: hashedPassword });
+
+    // Clean up reset store
+    passwordResetStore.delete(email);
+
+    return true;
   }
 
   /**

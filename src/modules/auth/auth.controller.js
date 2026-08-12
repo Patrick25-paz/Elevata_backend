@@ -140,6 +140,32 @@ class AuthController {
       next(error);
     }
   }
+
+  /**
+   * Triggers the sending of a 6-digit password reset code to the user's email.
+   */
+  async forgotPassword(req, res, next) {
+    try {
+      const { email } = req.body;
+      await authService.sendPasswordResetCode(email);
+      return successResponse(res, 'Password reset code sent successfully', null);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Resets the user's password after validating the reset code.
+   */
+  async resetPassword(req, res, next) {
+    try {
+      const { email, code, newPassword } = req.body;
+      await authService.resetPassword(email, code, newPassword);
+      return successResponse(res, 'Password reset successfully', null);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new AuthController();

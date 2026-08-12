@@ -22,13 +22,18 @@ async function main() {
         phone: '+250780000000',
         role: 'ADMIN',
         isVerified: true,
-        isActive: true
+        isActive: true,
+        isPilotApproved: true
       }
     });
 
     console.log(`✅ Admin user created successfully: ${admin.email}`);
   } else {
-    console.log('ℹ️ Admin user already exists. Seeding skipped.');
+    await prisma.user.update({
+      where: { email: adminEmail },
+      data: { isPilotApproved: true }
+    });
+    console.log('ℹ️ Admin user updated to be pilot approved.');
   }
 }
 

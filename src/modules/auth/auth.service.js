@@ -200,6 +200,7 @@ class AuthService {
         phone: newUser.phone,
         role: newUser.role,
         isVerified: newUser.isVerified,
+        isPilotApproved: newUser.isPilotApproved,
         business: newUser.business || null,
         financialInstitution: newUser.financialInstitution || null
       },
@@ -245,6 +246,7 @@ class AuthService {
         phone: user.phone,
         role: user.role,
         isVerified: user.isVerified,
+        isPilotApproved: user.isPilotApproved,
         business: user.business || null,
         financialInstitution: user.financialInstitution || null
       },

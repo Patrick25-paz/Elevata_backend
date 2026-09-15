@@ -22,6 +22,19 @@ class BusinessRepository {
       include: { user: true }
     });
   }
+
+  /**
+   * Update a business record by User ID.
+   * @param {string} userId - User ID
+   * @param {object} data - Fields to update
+   */
+  async updateByUserId(userId, data) {
+    return prisma.business.update({
+      where: { userId },
+      data,
+      include: { user: true }
+    });
+  }
 }
 
 export default new BusinessRepository();

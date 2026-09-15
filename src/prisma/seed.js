@@ -23,7 +23,8 @@ async function main() {
         role: 'ADMIN',
         isVerified: true,
         isActive: true,
-        isPilotApproved: true
+        isPilotApproved: true,
+        is_approved: true
       }
     });
 
@@ -31,7 +32,7 @@ async function main() {
   } else {
     await prisma.user.update({
       where: { email: adminEmail },
-      data: { isPilotApproved: true }
+      data: { isPilotApproved: true, is_approved: true }
     });
     console.log('ℹ️ Admin user updated to be pilot approved.');
   }

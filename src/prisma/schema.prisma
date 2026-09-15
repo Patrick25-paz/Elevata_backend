@@ -22,6 +22,7 @@ model User {
   isVerified           Boolean               @default(false)
   isActive             Boolean               @default(true)
   isPilotApproved      Boolean               @default(false)
+  is_approved          Boolean               @default(false)
   refreshToken         String?               @db.Text
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -46,6 +47,9 @@ model Business {
   longitude    Decimal
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  products     Product[]
+  sales        SaleTransaction[]
+  stockIntakes InventoryTransaction[]
 }
 
 model FinancialInstitution {
@@ -61,3 +65,118 @@ model FinancialInstitution {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
+
+model BusinessCategory {
+  id            String        @id @default(uuid())
+  businessType  String        @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  opportunities Opportunity[]
+}
+
+model Opportunity {
+  id                   String            @id @default(uuid())
+  title                String
+  institution          String
+  category             String            // e.g. Loan, Grant, Digital Solution, Insurance, Training, Advisory
+  description          String            @db.Text
+  benefits             String?           @db.Text
+  deadline             String
+  maxFunding           String
+  sectors              String[]          @default([])
+  categoryId           String?
+  categoryRel          BusinessCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  minAge               Int               @default(0)
+  minRevenue           Float             @default(0)
+  minHealthScore       Int               @default(0)
+  minReadinessScore    Int               @default(0)
+  registrationRequired Boolean           @default(false)
+  taxCompliance        Boolean           @default(false)
+  collateralRequired   Boolean           @default(false)
+  requiredDocs         String[]          @default([])
+  views                Int               @default(0)
+  saved                Int               @default(0)
+  applicationsCount    Int               @default(0)
+  status               String            @default("Active") // 'Active' | 'Closed'
+  metadata             Json?
+  authorId             String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+}
+
+model Product {
+  id            String    @id @default(uuid())
+  businessId    String?
+  business      Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?   @db.Text
+  unit          String    @default("pcs") // e.g. "kgs", "meters", "m²", "l", "dozen", "pcs", "box", "bag", "tons"
+  unitPrice     Float     @default(0)     // Selling price per unit
+  costPrice     Float?    @default(0)     // Cost price per unit
+  stockQuantity Float     @default(0)     // Available quantity in specified unit
+  reorderLevel  Float?    @default(5)
+  category      String?   @default("General")
+  sku           String?
+  status        String    @default("In Stock") // "In Stock", "Low Stock", "Out of Stock", "Overstock"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model SaleTransaction {
+  id              String                @id @default(uuid())
+  businessId      String?
+  business        Business?             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer        String                // Buyer / Client Name
+  customerContact String?
+  invoiceNumber   String?
+  totalAmount     Float                 @default(0)
+  paymentStatus   String                @default("Completed") // "Completed", "Pending", "Partial", "Cancelled"
+  paymentMethod   String?               @default("Cash")
+  notes           String?               @db.Text
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  items           SaleTransactionItem[]
+}
+
+model SaleTransactionItem {
+  id          String          @id @default(uuid())
+  saleId      String
+  sale        SaleTransaction @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId   String?         // Optional reference
+  productName String          // Copied snapshot so master product edits do not affect historical sale
+  unit        String          @default("pcs") // Copied snapshot
+  quantity    Float           @default(1)
+  unitPrice   Float           @default(0) // Copied snapshot
+  total       Float           @default(0)
+  createdAt   DateTime        @default(now())
+}
+
+model InventoryTransaction {
+  id            String                     @id @default(uuid())
+  businessId    String?
+  business      Business?                  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier      String?                    // Supplier name
+  invoiceNumber String?
+  totalAmount   Float                      @default(0)
+  status        String                     @default("Received") // "Received", "Pending", "Cancelled"
+  notes         String?                    @db.Text
+  createdAt     DateTime                   @default(now())
+  updatedAt     DateTime                   @updatedAt
+  items         InventoryTransactionItem[]
+}
+
+model InventoryTransactionItem {
+  id            String               @id @default(uuid())
+  transactionId String
+  transaction   InventoryTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  productId     String?              // Optional reference
+  productName   String               // Copied snapshot
+  unit          String               @default("pcs") // Copied snapshot
+  quantity      Float                @default(1)
+  unitPrice     Float                @default(0) // Unit purchase cost
+  total         Float                @default(0)
+  createdAt     DateTime             @default(now())
+}
+
+
+

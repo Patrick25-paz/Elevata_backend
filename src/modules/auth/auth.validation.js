@@ -104,3 +104,20 @@ export const loginSchema = z.object({
   email: z.string().trim().email('Invalid email format'),
   password: z.string().min(1, 'Password is required')
 });
+
+export const emailSchema = z.object({
+  email: z.string().trim().email('Invalid email address format')
+});
+
+export const emailCodeSchema = emailSchema.extend({
+  code: z.string().trim().regex(/^\d{6}$/, 'Code must be 6 digits')
+});
+
+export const forgotPasswordSchema = emailSchema;
+
+export const resetPasswordSchema = emailCodeSchema.extend({
+  newPassword: z.string().min(8, 'Password must be at least 8 characters').regex(
+    strongPasswordRegex,
+    'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+  )
+});

@@ -14,6 +14,19 @@ class BusinessController {
       next(error);
     }
   }
+
+  /**
+   * Updates the business profile and operational details.
+   */
+  async updateBusinessProfile(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const updatedBusiness = await businessService.updateBusinessProfile(userId, req.body);
+      return successResponse(res, 'Business profile updated successfully', { business: updatedBusiness });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new BusinessController();

@@ -14,6 +14,16 @@ export const successResponse = (res, message, data = {}, statusCode = 200) => {
 };
 
 /**
+ * Sends a standardized 201 created response.
+ * @param {object} res - Express response object
+ * @param {string} message - Response message
+ * @param {any} data - Response payload data
+ */
+export const createdResponse = (res, message, data = {}) => {
+  return successResponse(res, message, data, 201);
+};
+
+/**
  * Sends a standardized error response.
  * @param {object} res - Express response object
  * @param {string} message - Error response message

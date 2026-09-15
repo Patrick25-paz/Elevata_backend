@@ -33,5 +33,7 @@ export async function sendEmail({ to, subject, html }) {
     throw new Error(`Resend email sending failed: ${errorText}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log(`Resend accepted email ${result.id || '(no message id)'} for ${to}`);
+  return result;
 }

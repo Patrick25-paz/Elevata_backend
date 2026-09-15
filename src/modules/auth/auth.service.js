@@ -34,6 +34,11 @@ class AuthService {
       verified: false
     });
 
+    console.log(`\n=========================================`);
+    console.log(`📧 [EMAIL VERIFICATION] Code for: ${email}`);
+    console.log(`🔑 Verification Code: ${code}`);
+    console.log(`=========================================\n`);
+
     // Send email using Resend
     const subject = 'Verify your email - Elevata';
     const html = `
@@ -83,7 +88,8 @@ class AuthService {
     `;
 
     try {
-      await sendEmail({ to: email, subject, html });
+      const result = await sendEmail({ to: email, subject, html });
+      console.log(`Verification email queued with Resend id: ${result.id || '(unknown)'}`);
     } catch (error) {
       console.error('Failed to send verification email:', error);
       throw new AppError('Failed to send verification email. Please check your address or try again.', 500);
@@ -131,16 +137,18 @@ class AuthService {
    * @param {object} data - Full registration request body
    */
   async register(data) {
-    // 0. Verify email has been verified
-    const verification = verificationStore.get(data.email);
-    if (!verification || !verification.verified) {
-      throw new AppError('Email address has not been verified', 400);
-    }
-
     // 1. Check if email is already taken
     const existingUser = await userRepository.findByEmail(data.email);
     if (existingUser) {
       throw new AppError('Email address is already registered', 409);
+    }
+
+    const verification = verificationStore.get(data.email);
+    if (!verification || !verification.verified || verification.expiresAt < Date.now()) {
+      if (verification && verification.expiresAt < Date.now()) {
+        verificationStore.delete(data.email);
+      }
+      throw new AppError('Please verify your email address before registering', 400);
     }
 
     // 2. Hash the user's password
@@ -202,6 +210,7 @@ class AuthService {
         role: newUser.role,
         isVerified: newUser.isVerified,
         isPilotApproved: newUser.isPilotApproved,
+        is_approved: newUser.is_approved,
         business: newUser.business || null,
         financialInstitution: newUser.financialInstitution || null
       },
@@ -248,6 +257,7 @@ class AuthService {
         role: user.role,
         isVerified: user.isVerified,
         isPilotApproved: user.isPilotApproved,
+        is_approved: user.is_approved,
         business: user.business || null,
         financialInstitution: user.financialInstitution || null
       },
@@ -312,6 +322,11 @@ class AuthService {
       expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
     });
 
+    console.log(`\n=========================================`);
+    console.log(`🔐 [PASSWORD RESET] Code for: ${email}`);
+    console.log(`🔑 Verification Code: ${code}`);
+    console.log(`=========================================\n`);
+
     // Send email using Resend
     const subject = 'Reset your password - Elevata';
     const html = `
@@ -361,7 +376,8 @@ class AuthService {
     `;
 
     try {
-      await sendEmail({ to: email, subject, html });
+      const result = await sendEmail({ to: email, subject, html });
+      console.log(`Password reset email queued with Resend id: ${result.id || '(unknown)'}`);
     } catch (error) {
       console.error('Failed to send password reset email:', error);
       throw new AppError('Failed to send password reset email. Please try again.', 500);

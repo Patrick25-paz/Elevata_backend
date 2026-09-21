@@ -418,13 +418,14 @@ class TrainingService {
   }
 
   /**
-   * Sync virtual room state (status, attendees, messages).
+   * Sync virtual room state (status, attendees, messages, liveState).
    */
-  async syncLiveRoom(trainingId, { status, attendees, chatMessages }) {
+  async syncLiveRoom(trainingId, { status, attendees, chatMessages, liveState }) {
     const updateData = {};
     if (status !== undefined) updateData.status = status;
     if (attendees !== undefined) updateData.attendees = attendees;
     if (chatMessages !== undefined) updateData.chatMessages = chatMessages;
+    if (liveState !== undefined) updateData.liveState = liveState;
 
     try {
       return await trainingRepository.update(trainingId, updateData);
@@ -434,10 +435,40 @@ class TrainingService {
         if (status !== undefined) tr.status = status;
         if (attendees !== undefined) tr.attendees = attendees;
         if (chatMessages !== undefined) tr.chatMessages = chatMessages;
+        if (liveState !== undefined) tr.liveState = liveState;
         return tr;
       }
       throw e;
     }
+  }
+
+  /**
+   * WebRTC P2P signaling exchange for cross-device screen share
+   */
+  sendSignal(trainingId, { from, to, signal }) {
+    if (!this.signals) this.signals = [];
+    const entry = {
+      id: `sig-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      trainingId,
+      from,
+      to: to || 'all',
+      signal,
+      timestamp: Date.now()
+    };
+    this.signals.push(entry);
+    const cutoff = Date.now() - 45000;
+    this.signals = this.signals.filter(s => s.timestamp > cutoff);
+    return entry;
+  }
+
+  getSignals(trainingId, peerId, since = 0) {
+    if (!this.signals) return [];
+    return this.signals.filter(s =>
+      s.trainingId === trainingId &&
+      s.from !== peerId &&
+      (s.to === peerId || s.to === 'all') &&
+      s.timestamp > Number(since || 0)
+    );
   }
 }
 

@@ -120,12 +120,42 @@ class TrainingController {
   async syncLiveRoom(req, res) {
     try {
       const { id } = req.params;
-      const { status, attendees, chatMessages } = req.body;
-      const updated = await trainingService.syncLiveRoom(id, { status, attendees, chatMessages });
+      const { status, attendees, chatMessages, liveState } = req.body;
+      const updated = await trainingService.syncLiveRoom(id, { status, attendees, chatMessages, liveState });
       return successResponse(res, 'Live room state synchronized', updated);
     } catch (err) {
       console.error('syncLiveRoom error:', err);
       return errorResponse(res, err.message || 'Failed to sync live room', err.statusCode || 400);
+    }
+  }
+
+  /**
+   * POST /api/trainings/:id/signal
+   * Send WebRTC signal (offer, answer, candidate)
+   */
+  async sendSignal(req, res) {
+    try {
+      const { id } = req.params;
+      const { from, to, signal } = req.body;
+      const result = trainingService.sendSignal(id, { from, to, signal });
+      return successResponse(res, 'Signal sent', result);
+    } catch (err) {
+      return errorResponse(res, err.message || 'Failed to send signal', 400);
+    }
+  }
+
+  /**
+   * GET /api/trainings/:id/signal
+   * Retrieve pending WebRTC signals
+   */
+  async getSignals(req, res) {
+    try {
+      const { id } = req.params;
+      const { peerId, since } = req.query;
+      const signals = trainingService.getSignals(id, peerId, since);
+      return successResponse(res, 'Signals retrieved', signals);
+    } catch (err) {
+      return errorResponse(res, err.message || 'Failed to retrieve signals', 400);
     }
   }
 }

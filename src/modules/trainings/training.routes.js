@@ -48,4 +48,8 @@ router.post('/:id/join', optionalAuthenticate, trainingController.joinTraining);
 // Live Room Synchronization (Attendees, Chat, Status)
 router.patch('/:id/live', optionalAuthenticate, trainingController.syncLiveRoom);
 
+// WebRTC Signaling for Live Screen Streaming
+router.post('/:id/signal', optionalAuthenticate, trainingController.sendSignal);
+router.get('/:id/signal', optionalAuthenticate, trainingController.getSignals);
+
 export default router;

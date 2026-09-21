@@ -200,6 +200,7 @@ model Training {
   materials         Json?                // Array of { title, url, size }
   attendees         Json?                // Array of TrainingAttendee objects
   chatMessages      Json?                // Array of TrainingChatMessage objects
+  liveState         Json?                // Live state (isScreenSharing, shareType, currentSlideIndex, screenSnapshot)
   authorId          String?
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt

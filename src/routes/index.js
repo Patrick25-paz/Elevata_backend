@@ -5,6 +5,7 @@ import categoryRouter from '../modules/categories/category.routes.js';
 import opportunityRouter from '../modules/opportunities/opportunity.routes.js';
 import inventoryRouter from '../modules/inventory/inventory.routes.js';
 import saleRouter from '../modules/sales/sale.routes.js';
+import trainingRouter from '../modules/trainings/training.routes.js';
 import userController from '../modules/users/user.controller.js';
 import businessController from '../modules/business/business.controller.js';
 import { authenticate } from '../middleware/authenticate.js';
@@ -20,6 +21,7 @@ router.use('/categories', categoryRouter);
 router.use('/opportunities', opportunityRouter);
 router.use('/inventory', inventoryRouter);
 router.use('/sales', saleRouter);
+router.use('/trainings', trainingRouter);
 
 // Profile endpoints accessible by logged-in users
 router.get('/users/profile', authenticate, userController.getProfile);

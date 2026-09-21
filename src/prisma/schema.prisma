@@ -178,5 +178,44 @@ model InventoryTransactionItem {
   createdAt     DateTime             @default(now())
 }
 
+model Training {
+  id                String               @id @default(uuid())
+  title             String
+  description       String               @db.Text
+  date              String               // e.g. "2026-08-22"
+  time              String               // e.g. "10:00 AM - 12:00 PM"
+  durationMinutes   Int                  @default(60)
+  speaker           String
+  speakerRole       String?
+  speakerOrg        String?
+  meetingLink       String
+  targetAudience    String[]             @default([])
+  participantsCount Int                  @default(0)
+  status            String               @default("scheduled") // 'scheduled' | 'live' | 'completed'
+  hasCertificate    Boolean              @default(true)
+  opportunityId     String?
+  opportunityTitle  String?
+  curriculum        String[]             @default([])
+  maxCapacity       Int                  @default(100)
+  materials         Json?                // Array of { title, url, size }
+  attendees         Json?                // Array of TrainingAttendee objects
+  chatMessages      Json?                // Array of TrainingChatMessage objects
+  authorId          String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  enrollments       TrainingEnrollment[]
+}
 
+model TrainingEnrollment {
+  id             String    @id @default(uuid())
+  trainingId     String
+  training       Training  @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  smeId          String    // SME ID e.g. "sme-1" or business ID
+  userId         String?   // Optional linked User ID
+  enrolledAt     DateTime  @default(now())
+  attended       Boolean   @default(false)
+  completed      Boolean   @default(false)
+  hasCertificate Boolean   @default(false)
 
+  @@unique([trainingId, smeId])
+}

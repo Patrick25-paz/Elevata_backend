@@ -1,4 +1,5 @@
 import trainingService from './training.service.js';
+import livekitService from './livekit.service.js';
 import { successResponse, errorResponse } from '../../utils/response.js';
 
 class TrainingController {
@@ -156,6 +157,31 @@ class TrainingController {
       return successResponse(res, 'Signals retrieved', signals);
     } catch (err) {
       return errorResponse(res, err.message || 'Failed to retrieve signals', 400);
+    }
+  }
+
+  /**
+   * POST /api/trainings/:id/livekit-token
+   * Generate LiveKit token for presenter or attendee
+   */
+  async getLiveKitToken(req, res) {
+    try {
+      const { id } = req.params;
+      const { participantId, participantName, isHost } = req.body || {};
+      const resolvedParticipantId = participantId || req.user?.id || (isHost ? 'host' : null);
+      const resolvedParticipantName = participantName || req.user?.name || req.user?.email;
+
+      const tokenData = await livekitService.generateToken({
+        trainingId: id,
+        participantId: resolvedParticipantId,
+        participantName: resolvedParticipantName,
+        isHost: Boolean(isHost || req.user?.role === 'BANKER' || req.user?.role === 'ADMIN'),
+      });
+
+      return successResponse(res, 'LiveKit room token generated successfully', tokenData);
+    } catch (err) {
+      console.error('getLiveKitToken error:', err);
+      return errorResponse(res, err.message || 'Failed to generate LiveKit token', 500);
     }
   }
 }

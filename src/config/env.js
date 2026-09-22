@@ -11,7 +11,10 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16, { message: 'JWT_REFRESH_SECRET must be at least 16 characters' }),
   ACCESS_TOKEN_EXPIRES: z.string().default('15m'),
   REFRESH_TOKEN_EXPIRES: z.string().default('7d'),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development')
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  LIVEKIT_API_KEY: z.string().optional().default('API47QHw2BCbjJN'),
+  LIVEKIT_API_SECRET: z.string().optional().default('ZYfIqMNcvY5VIWcxKUOwpSpXSNBaO0GPbRij1RUgNiG'),
+  LIVEKIT_URL: z.string().optional().default('wss://elevata-z1pfmey8.livekit.cloud')
 });
 
 const result = envSchema.safeParse(process.env);

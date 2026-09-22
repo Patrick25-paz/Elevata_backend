@@ -48,7 +48,11 @@ router.post('/:id/join', optionalAuthenticate, trainingController.joinTraining);
 // Live Room Synchronization (Attendees, Chat, Status)
 router.patch('/:id/live', optionalAuthenticate, trainingController.syncLiveRoom);
 
-// WebRTC Signaling for Live Screen Streaming
+// LiveKit Cloud Room Access Token (Presenter & Attendee)
+router.post('/:id/livekit-token', optionalAuthenticate, trainingController.getLiveKitToken);
+router.get('/:id/livekit-token', optionalAuthenticate, trainingController.getLiveKitToken);
+
+// WebRTC Signaling for Live Screen Streaming (Legacy Fallback)
 router.post('/:id/signal', optionalAuthenticate, trainingController.sendSignal);
 router.get('/:id/signal', optionalAuthenticate, trainingController.getSignals);
 

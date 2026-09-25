@@ -1,5 +1,6 @@
 import opportunityService from './opportunity.service.js';
 import { successResponse, errorResponse } from '../../utils/response.js';
+import prisma from '../../config/prisma.js';
 
 class OpportunityController {
   /**
@@ -42,7 +43,15 @@ class OpportunityController {
    */
   async createOpportunity(req, res) {
     try {
-      const opportunity = await opportunityService.createOpportunity(req.body, req.user);
+      const publisher = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        include: { financialInstitution: true }
+      });
+      const payload = {
+        ...req.body,
+        institution: publisher?.financialInstitution?.institutionName || req.body.institution
+      };
+      const opportunity = await opportunityService.createOpportunity(payload, req.user);
       return successResponse(res, 'Opportunity published and saved successfully', opportunity, 201);
     } catch (err) {
       console.error('createOpportunity error:', err);

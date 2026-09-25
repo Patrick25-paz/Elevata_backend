@@ -13,12 +13,12 @@ class LiveKitService {
    * @returns {Promise<{ token: string, url: string, room: string, identity: string, name: string }>}
    */
   async generateToken({ trainingId, participantId, participantName, isHost = false }) {
-    const apiKey = env.LIVEKIT_API_KEY || 'API47QHw2BCbjJN';
-    const apiSecret = env.LIVEKIT_API_SECRET || 'ZYfIqMNcvY5VIWcxKUOwpSpXSNBaO0GPbRij1RUgNiG';
-    const livekitUrl = env.LIVEKIT_URL || 'wss://elevata-z1pfmey8.livekit.cloud';
+    const apiKey = env.LIVEKIT_API_KEY;
+    const apiSecret = env.LIVEKIT_API_SECRET;
+    const livekitUrl = env.LIVEKIT_URL;
 
-    if (!apiKey || !apiSecret) {
-      throw new Error('LiveKit API key and secret must be configured');
+    if (!apiKey || !apiSecret || !livekitUrl) {
+      throw new Error('LIVEKIT_API_KEY, LIVEKIT_API_SECRET, and LIVEKIT_URL must be configured');
     }
 
     const roomName = `training_${trainingId}`;

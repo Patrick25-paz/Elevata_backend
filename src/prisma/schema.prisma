@@ -45,11 +45,33 @@ model Business {
   knownPlace   String?
   latitude     Decimal
   longitude    Decimal
+  operational  Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   products     Product[]
   sales        SaleTransaction[]
   stockIntakes InventoryTransaction[]
+  applications FinancingApplication[]
+  ledgerEntries BusinessLedgerEntry[]
+}
+
+model BusinessLedgerEntry {
+  id            String   @id @default(uuid())
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  kind          String
+  amount        Float    @default(0)
+  category      String?
+  description   String
+  counterparty  String?
+  paymentMethod String?
+  status        String   @default("Completed")
+  metadata      Json?
+  occurredAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([businessId, occurredAt])
+  @@index([businessId, kind])
 }
 
 model FinancialInstitution {
@@ -102,6 +124,44 @@ model Opportunity {
   authorId             String?
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
+  applications         FinancingApplication[]
+}
+
+model FinancingApplication {
+  id               String                @id @default(uuid())
+  opportunityId    String
+  opportunity      Opportunity           @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  businessId       String
+  business         Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status           String                @default("Submitted")
+  requestedAmount  Float?
+  purpose          String?
+  termMonths       Int?
+  contactPhone     String?
+  contactEmail     String?
+  notes            String?               @db.Text
+  feedback         String?               @db.Text
+  submittedAt      DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  documents        ApplicationDocument[]
+
+  @@unique([opportunityId, businessId])
+  @@index([status])
+  @@index([submittedAt])
+}
+
+model ApplicationDocument {
+  id             String               @id @default(uuid())
+  applicationId  String
+  application    FinancingApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  documentType   String
+  fileName       String
+  mimeType       String
+  sizeBytes      Int
+  storageKey     String               @unique
+  uploadedAt     DateTime             @default(now())
+
+  @@index([applicationId])
 }
 
 model Product {

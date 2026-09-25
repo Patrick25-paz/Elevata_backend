@@ -5,49 +5,39 @@ class TrainingRepository {
    * Find all trainings with optional status, sector, or search filter.
    */
   async findAll(filters = {}) {
-    try {
-      const where = {};
+    const where = {};
 
-      if (filters.status && filters.status !== 'all') {
-        where.status = filters.status;
-      }
-      if (filters.search) {
-        where.OR = [
-          { title: { contains: filters.search, mode: 'insensitive' } },
-          { speaker: { contains: filters.search, mode: 'insensitive' } },
-          { speakerOrg: { contains: filters.search, mode: 'insensitive' } },
-          { description: { contains: filters.search, mode: 'insensitive' } }
-        ];
-      }
-
-      return await prisma.training.findMany({
-        where,
-        include: {
-          enrollments: true
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-    } catch (err) {
-      console.warn('Prisma training query fallback:', err.message);
-      return null;
+    if (filters.status && filters.status !== 'all') {
+      where.status = filters.status;
     }
+    if (filters.search) {
+      where.OR = [
+        { title: { contains: filters.search, mode: 'insensitive' } },
+        { speaker: { contains: filters.search, mode: 'insensitive' } },
+        { speakerOrg: { contains: filters.search, mode: 'insensitive' } },
+        { description: { contains: filters.search, mode: 'insensitive' } }
+      ];
+    }
+
+    return prisma.training.findMany({
+      where,
+      include: {
+        enrollments: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
   }
 
   /**
    * Find a training by ID.
    */
   async findById(id) {
-    try {
-      return await prisma.training.findUnique({
-        where: { id },
-        include: {
-          enrollments: true
-        }
-      });
-    } catch (err) {
-      console.warn('Prisma training findById fallback:', err.message);
-      return null;
-    }
+    return prisma.training.findUnique({
+      where: { id },
+      include: {
+        enrollments: true
+      }
+    });
   }
 
   /**
@@ -88,18 +78,14 @@ class TrainingRepository {
    * Find an enrollment record for an SME and training.
    */
   async findEnrollment(trainingId, smeId) {
-    try {
-      return await prisma.trainingEnrollment.findUnique({
-        where: {
-          trainingId_smeId: {
-            trainingId,
-            smeId
-          }
+    return prisma.trainingEnrollment.findUnique({
+      where: {
+        trainingId_smeId: {
+          trainingId,
+          smeId
         }
-      });
-    } catch (err) {
-      return null;
-    }
+      }
+    });
   }
 
   /**
@@ -133,18 +119,14 @@ class TrainingRepository {
    * Remove enrollment record.
    */
   async deleteEnrollment(trainingId, smeId) {
-    try {
-      return await prisma.trainingEnrollment.delete({
-        where: {
-          trainingId_smeId: {
-            trainingId,
-            smeId
-          }
+    return prisma.trainingEnrollment.delete({
+      where: {
+        trainingId_smeId: {
+          trainingId,
+          smeId
         }
-      });
-    } catch (err) {
-      return null;
-    }
+      }
+    });
   }
 }
 

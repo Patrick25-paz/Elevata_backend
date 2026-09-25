@@ -167,15 +167,16 @@ class TrainingController {
   async getLiveKitToken(req, res) {
     try {
       const { id } = req.params;
-      const { participantId, participantName, isHost } = req.body || {};
-      const resolvedParticipantId = participantId || req.user?.id || (isHost ? 'host' : null);
+      const { participantName } = req.body || {};
+      const isHost = req.user?.role === 'FINANCIAL_INSTITUTION' || req.user?.role === 'ADMIN';
+      const resolvedParticipantId = req.user?.id;
       const resolvedParticipantName = participantName || req.user?.name || req.user?.email;
 
       const tokenData = await livekitService.generateToken({
         trainingId: id,
         participantId: resolvedParticipantId,
         participantName: resolvedParticipantName,
-        isHost: Boolean(isHost || req.user?.role === 'BANKER' || req.user?.role === 'ADMIN'),
+        isHost,
       });
 
       return successResponse(res, 'LiveKit room token generated successfully', tokenData);

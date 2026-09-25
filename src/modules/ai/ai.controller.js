@@ -1,5 +1,6 @@
 import aiService from './ai.service.js';
 import { successResponse } from '../../utils/response.js';
+import prisma from '../../config/prisma.js';
 
 class AIController {
   /**
@@ -7,7 +8,10 @@ class AIController {
    */
   async chatWithBot(req, res) {
     const { message, history, context } = req.body;
-    const user = req.user;
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { business: true, financialInstitution: true }
+    }) || req.user;
 
     const result = await aiService.generateChatResponse({
       user,
@@ -23,7 +27,10 @@ class AIController {
    * Returns contextual prompt suggestions based on user role.
    */
   async getSuggestions(req, res) {
-    const user = req.user;
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { business: true, financialInstitution: true }
+    }) || req.user;
     const suggestions = aiService.getQuickSuggestions(user);
     return successResponse(res, 'Suggestions retrieved successfully', suggestions);
   }

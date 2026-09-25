@@ -2,48 +2,121 @@ import businessRepository from './business.repository.js';
 import userRepository from '../users/user.repository.js';
 import { AppError } from '../../utils/errors.js';
 
-// In-memory store for rich operational business profile metadata
-const operationalProfileStore = new Map();
-
 export const DEFAULT_SME_OPERATIONAL_DATA = {
-  // Operational Equipments & Machinery
-  equipments: [
-    { id: 'eq_1', name: 'Cloud POS Terminal & Barcode Scanner', category: 'Technology', value: 650000, condition: 'Operational' },
-    { id: 'eq_2', name: 'Commercial Grade Refrigerator & Cold Shelf', category: 'Storage', value: 2400000, condition: 'Operational' },
-    { id: 'eq_3', name: 'Delivery Motorcycle (150cc)', category: 'Logistics', value: 1800000, condition: 'Operational' },
-    { id: 'eq_4', name: 'Diesel Backup Generator (5kVA)', category: 'Power', value: 1200000, condition: 'Operational' }
-  ],
-  totalEquipmentValue: 6050000,
-
-  // Balance Sheet & Capital
-  currentAssets: 8500000,      // Cash + stock + accounts receivable
-  fixedAssets: 9500000,        // Equipment + vehicle + fixtures
-  totalAssets: 18000000,
-  shortTermLiabilities: 1800000, // Supplier credit
-  longTermLiabilities: 1700000,  // Microfinance debt
-  totalLiabilities: 3500000,
-  ownerCapital: 14500000,      // Equity (Assets - Liabilities)
-  monthlyTurnover: 4200000,
-  annualRevenue: 50400000,
-  grossMarginPercentage: 28,
-
-  // Human Capital & Payroll
-  fullTimeEmployees: 4,
-  partTimeEmployees: 2,
-  totalEmployees: 6,
-  monthlyPayroll: 750000,
-  roles: ['Store Manager', 'Sales Attendants (2)', 'Logistics Rider', 'Accountant (Part-time)'],
-
-  // Strategic Positioning & Categorization
-  businessStage: 'Growth / Scaling',
-  targetMarket: 'Retail Consumers, Local Offices & Small Catering Businesses',
-  primaryProducts: 'Fast-Moving Consumer Goods (FMCG), Packaged Groceries, Fresh Produce',
-  operationalChallenges: 'Working capital constraints for bulk discount supplier orders and transport fuel costs',
-  strategicGoals: 'Expand inventory variety, secure 5M RWF working capital facility, and launch direct B2B supply contracts',
-  digitizationLevel: 'Medium (POS & Mobile Money enabled)'
+  equipments: [],
+  totalEquipmentValue: 0,
+  currentAssets: 0,
+  fixedAssets: 0,
+  totalAssets: 0,
+  shortTermLiabilities: 0,
+  longTermLiabilities: 0,
+  totalLiabilities: 0,
+  ownerCapital: 0,
+  monthlyTurnover: 0,
+  annualRevenue: 0,
+  grossMarginPercentage: 0,
+  fullTimeEmployees: 0,
+  partTimeEmployees: 0,
+  totalEmployees: 0,
+  monthlyPayroll: 0,
+  roles: [],
+  businessStage: '',
+  targetMarket: '',
+  primaryProducts: '',
+  operationalChallenges: '',
+  strategicGoals: '',
+  digitizationLevel: ''
 };
 
 class BusinessService {
+  _toDashboardProfile(business) {
+    const series = new Map();
+    const bucketFor = (dateValue) => {
+      const date = new Date(dateValue);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (!series.has(key)) {
+        series.set(key, {
+          key,
+          month: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+          revenue: 0,
+          expenses: 0,
+          inflow: 0,
+          outflow: 0
+        });
+      }
+      return series.get(key);
+    };
+
+    business.sales.forEach((sale) => {
+      const bucket = bucketFor(sale.createdAt);
+      bucket.revenue += sale.totalAmount;
+      bucket.inflow += sale.paymentStatus === 'Cancelled' ? 0 : sale.totalAmount;
+    });
+    business.stockIntakes.forEach((intake) => {
+      const bucket = bucketFor(intake.createdAt);
+      bucket.expenses += intake.totalAmount;
+      bucket.outflow += intake.status === 'Cancelled' ? 0 : intake.totalAmount;
+    });
+    business.ledgerEntries.forEach((entry) => {
+      const bucket = bucketFor(entry.occurredAt);
+      if (entry.kind === 'CASH_IN') {
+        bucket.inflow += entry.amount;
+        bucket.revenue += entry.amount;
+      } else if (entry.kind !== 'OTHER') {
+        bucket.outflow += entry.amount;
+        bucket.expenses += entry.amount;
+      }
+    });
+
+    const monthlyData = Array.from(series.values()).sort((a, b) => a.key.localeCompare(b.key)).slice(-12)
+      .map(({ key, ...item }) => item);
+    const totalRevenue = monthlyData.reduce((sum, item) => sum + item.revenue, 0);
+    const totalExpenses = monthlyData.reduce((sum, item) => sum + item.expenses, 0);
+    const margin = totalRevenue > 0 ? (totalRevenue - totalExpenses) / totalRevenue : 0;
+    const lowStock = business.products.filter((item) => item.status === 'Low Stock' || item.status === 'Out of Stock').length;
+    const healthScore = Math.max(0, Math.min(100, Math.round(50 + margin * 35 + (business.sales.length ? 10 : 0) - lowStock * 2)));
+    const currentBalance = monthlyData.reduce((sum, item) => sum + item.inflow - item.outflow, Number(business.operational?.openingBalance || 0));
+
+    return {
+      id: business.id,
+      name: business.businessName,
+      ownerName: business.ownerName,
+      sector: business.businessType,
+      email: business.user.email,
+      phone: business.user.phone,
+      healthScore,
+      healthTrend: 'stable',
+      healthTrendPercent: 0,
+      currentBalance,
+      borrowingCapacity: Math.max(0, Math.round(Math.max(0, currentBalance) * 0.6)),
+      riskRating: healthScore >= 75 ? 'Low' : healthScore >= 55 ? 'Medium' : 'High',
+      inventoryItems: business.products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        unit: product.unit,
+        stockLevel: product.stockQuantity,
+        status: product.status,
+        daysRemaining: 0,
+        reorderPoint: product.reorderLevel || 0,
+        unitPrice: product.unitPrice,
+        costPrice: product.costPrice,
+        category: product.category,
+        description: product.description
+      })),
+      loanDetails: { status: 'None', outstandingAmount: 0, monthlyInstallment: 0, interestRate: 0, repaymentPeriodMonths: 0 },
+      riskAlerts: lowStock ? [{ id: 'stock-risk', type: 'warning', text: `${lowStock} inventory item(s) require attention.` }] : [],
+      monthlyData,
+      sales: business.sales,
+      expenses: business.ledgerEntries.filter((entry) => entry.kind === 'EXPENSE'),
+      purchases: business.stockIntakes,
+      cashIns: business.ledgerEntries.filter((entry) => entry.kind === 'CASH_IN'),
+      cashOuts: business.ledgerEntries.filter((entry) => entry.kind === 'CASH_OUT'),
+      otherActivities: business.ledgerEntries.filter((entry) => entry.kind === 'OTHER'),
+      age: Math.max(0, new Date().getFullYear() - new Date(business.createdAt).getFullYear()),
+      operational: business.operational || {}
+    };
+  }
+
   /**
    * Retrieves business details with rich operational metrics linked to a specific user.
    * @param {string} userId - User ID
@@ -54,7 +127,7 @@ class BusinessService {
       throw new AppError('Business details not found for this user', 404);
     }
 
-    const operationalData = operationalProfileStore.get(userId) || { ...DEFAULT_SME_OPERATIONAL_DATA };
+    const operationalData = business.operational || { ...DEFAULT_SME_OPERATIONAL_DATA };
 
     return {
       ...business,
@@ -108,17 +181,17 @@ class BusinessService {
       await userRepository.update(userId, { phone });
     }
 
-    // Update Business record in DB
-    const updatedBusiness = await businessRepository.updateByUserId(userId, coreUpdate);
-
-    // 2. Save/Update rich operational data
     if (operational && typeof operational === 'object') {
-      const currentOp = operationalProfileStore.get(userId) || { ...DEFAULT_SME_OPERATIONAL_DATA };
-      const mergedOp = { ...currentOp, ...operational };
-      operationalProfileStore.set(userId, mergedOp);
+      coreUpdate.operational = {
+        ...DEFAULT_SME_OPERATIONAL_DATA,
+        ...(existingBusiness.operational || {}),
+        ...operational
+      };
     }
 
-    const finalOperational = operationalProfileStore.get(userId) || { ...DEFAULT_SME_OPERATIONAL_DATA };
+    // Update core and operational data atomically on the Business record.
+    const updatedBusiness = await businessRepository.updateByUserId(userId, coreUpdate);
+    const finalOperational = updatedBusiness.operational || { ...DEFAULT_SME_OPERATIONAL_DATA };
 
     return {
       ...updatedBusiness,
@@ -130,7 +203,49 @@ class BusinessService {
    * Internal helper to get operational profile for AI system prompt.
    */
   getOperationalData(userId) {
-    return operationalProfileStore.get(userId) || DEFAULT_SME_OPERATIONAL_DATA;
+    return DEFAULT_SME_OPERATIONAL_DATA;
+  }
+
+  async getDashboardByUserId(userId) {
+    const business = await businessRepository.findDashboardByUserId(userId);
+    if (!business) throw new AppError('Business details not found for this user', 404);
+    return this._toDashboardProfile(business);
+  }
+
+  async getPortfolio() {
+    const businesses = await businessRepository.findPortfolio();
+    return businesses.map((business) => this._toDashboardProfile(business));
+  }
+
+  async getLedger(userId, filters) {
+    const business = await businessRepository.findByUserId(userId);
+    if (!business) throw new AppError('Business details not found for this user', 404);
+    return businessRepository.findLedgerEntries(business.id, filters);
+  }
+
+  async createLedgerEntry(userId, payload) {
+    const business = await businessRepository.findByUserId(userId);
+    if (!business) throw new AppError('Business details not found for this user', 404);
+    const allowedKinds = ['CASH_IN', 'CASH_OUT', 'EXPENSE', 'OTHER'];
+    if (!allowedKinds.includes(payload.kind)) throw new AppError('Invalid ledger entry type', 400);
+    if (!payload.description?.trim()) throw new AppError('Description is required', 400);
+    return businessRepository.createLedgerEntry(business.id, {
+      kind: payload.kind,
+      amount: Number(payload.amount) || 0,
+      category: payload.category || null,
+      description: payload.description.trim(),
+      counterparty: payload.counterparty || null,
+      paymentMethod: payload.paymentMethod || null,
+      status: payload.status || 'Completed',
+      metadata: payload.metadata || null,
+      occurredAt: payload.occurredAt ? new Date(payload.occurredAt) : new Date()
+    });
+  }
+
+  async deleteLedgerEntry(userId, id) {
+    const business = await businessRepository.findByUserId(userId);
+    if (!business) throw new AppError('Business details not found for this user', 404);
+    return businessRepository.deleteLedgerEntry(id, business.id);
   }
 }
 

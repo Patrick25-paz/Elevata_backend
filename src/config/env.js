@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 // Load .env file
 dotenv.config();
+dotenv.config({ path: 'src/.env' });
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(5000),
@@ -12,9 +13,9 @@ const envSchema = z.object({
   ACCESS_TOKEN_EXPIRES: z.string().default('15m'),
   REFRESH_TOKEN_EXPIRES: z.string().default('7d'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  LIVEKIT_API_KEY: z.string().optional().default('API47QHw2BCbjJN'),
-  LIVEKIT_API_SECRET: z.string().optional().default('ZYfIqMNcvY5VIWcxKUOwpSpXSNBaO0GPbRij1RUgNiG'),
-  LIVEKIT_URL: z.string().optional().default('wss://elevata-z1pfmey8.livekit.cloud')
+  LIVEKIT_API_KEY: z.string().min(1).optional(),
+  LIVEKIT_API_SECRET: z.string().min(1).optional(),
+  LIVEKIT_URL: z.string().url().optional()
 });
 
 const result = envSchema.safeParse(process.env);

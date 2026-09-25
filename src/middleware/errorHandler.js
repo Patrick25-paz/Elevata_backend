@@ -27,6 +27,13 @@ export const errorHandler = (err, req, res, next) => {
     return errorResponse(res, 'Validation failed', formattedErrors, 400);
   }
 
+  if (err.name === 'MulterError') {
+    const message = err.code === 'LIMIT_FILE_SIZE'
+      ? 'Each document must be 10 MB or smaller.'
+      : 'The uploaded documents could not be processed.';
+    return errorResponse(res, message, [], err.code === 'LIMIT_FILE_SIZE' ? 413 : 400);
+  }
+
   // Handle Prisma Known Request Errors
   if (err.code && err.code.startsWith('P')) {
     // P2002: Unique constraint failed

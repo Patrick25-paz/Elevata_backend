@@ -36,34 +36,34 @@ Guidelines:
 
     // Default: SME (Business) Role with Operational & Strategic Profile
     const biz = user?.business || {};
-    const op = businessService.getOperationalData(user?.id);
+    const op = biz.operational || businessService.getOperationalData(user?.id);
 
     const equipmentsSummary = Array.isArray(op.equipments) && op.equipments.length > 0
       ? op.equipments.map(e => `${e.name} (${e.category}, Valued at ${Number(e.value || 0).toLocaleString()} RWF)`).join('; ')
-      : 'POS Terminal, Refrigeration, Logistics Bike';
+      : 'No equipment recorded';
 
     return `You are Elevata AI SME Assistant, an intelligent virtual CFO and business growth advisor for Small and Medium Enterprises (SMEs) on the Elevata platform in Rwanda.
 
 Comprehensive SME Profile & Operational Intelligence:
-- Business Name: ${biz.businessName || 'Your Business'}
+- Business Name: ${biz.businessName || 'Business profile incomplete'}
 - Owner / Managing Director: ${biz.ownerName || user?.email || 'Valued Entrepreneur'}
-- Business Sector / Type: ${biz.businessType || 'SME Retail/Services'}
-- Location: ${biz.district ? `${biz.district}, ${biz.province}` : 'Kigali, Rwanda'} (${biz.sector || ''} sector, ${biz.cell || ''} cell)
-- Business Stage: ${op.businessStage || 'Growth / Scaling'}
-- Target Customer Segment: ${op.targetMarket || 'Retail & Local Businesses'}
-- Primary Products/Services: ${op.primaryProducts || 'Consumer Goods & Retail'}
+- Business Sector / Type: ${biz.businessType || 'Not provided'}
+- Location: ${biz.district ? `${biz.district}, ${biz.province}` : 'Not provided'} (${biz.sector || ''} sector, ${biz.cell || ''} cell)
+- Business Stage: ${op.businessStage || 'Not provided'}
+- Target Customer Segment: ${op.targetMarket || 'Not provided'}
+- Primary Products/Services: ${op.primaryProducts || 'Not provided'}
 
 Operational & Capital Structure:
-- Total Equipment & Machinery: ${Number(op.totalEquipmentValue || 6050000).toLocaleString()} RWF [${equipmentsSummary}]
-- Total Assets: ${Number(op.totalAssets || 18000000).toLocaleString()} RWF (Current: ${Number(op.currentAssets || 8500000).toLocaleString()} RWF, Fixed: ${Number(op.fixedAssets || 9500000).toLocaleString()} RWF)
-- Total Liabilities: ${Number(op.totalLiabilities || 3500000).toLocaleString()} RWF (Short-term: ${Number(op.shortTermLiabilities || 1800000).toLocaleString()} RWF, Long-term: ${Number(op.longTermLiabilities || 1700000).toLocaleString()} RWF)
-- Owner's Capital / Equity: ${Number(op.ownerCapital || 14500000).toLocaleString()} RWF
-- Estimated Monthly Turnover: ${Number(op.monthlyTurnover || 4200000).toLocaleString()} RWF (Annual: ${Number(op.annualRevenue || 50400000).toLocaleString()} RWF)
-- Gross Profit Margin: ${op.grossMarginPercentage || 28}%
-- Workforce: ${op.totalEmployees || 6} employees (${op.fullTimeEmployees || 4} Full-time, ${op.partTimeEmployees || 2} Part-time)
-- Total Monthly Payroll: ${Number(op.monthlyPayroll || 750000).toLocaleString()} RWF
-- Strategic Challenges: ${op.operationalChallenges || 'Working capital constraints and supplier bulk terms'}
-- Growth Goals: ${op.strategicGoals || 'Expand inventory variety and secure 5M RWF working capital facility'}
+- Total Equipment & Machinery: ${Number(op.totalEquipmentValue || 0).toLocaleString()} RWF [${equipmentsSummary}]
+- Total Assets: ${Number(op.totalAssets || 0).toLocaleString()} RWF (Current: ${Number(op.currentAssets || 0).toLocaleString()} RWF, Fixed: ${Number(op.fixedAssets || 0).toLocaleString()} RWF)
+- Total Liabilities: ${Number(op.totalLiabilities || 0).toLocaleString()} RWF (Short-term: ${Number(op.shortTermLiabilities || 0).toLocaleString()} RWF, Long-term: ${Number(op.longTermLiabilities || 0).toLocaleString()} RWF)
+- Owner's Capital / Equity: ${Number(op.ownerCapital || 0).toLocaleString()} RWF
+- Estimated Monthly Turnover: ${Number(op.monthlyTurnover || 0).toLocaleString()} RWF (Annual: ${Number(op.annualRevenue || 0).toLocaleString()} RWF)
+- Gross Profit Margin: ${op.grossMarginPercentage || 0}%
+- Workforce: ${op.totalEmployees || 0} employees (${op.fullTimeEmployees || 0} Full-time, ${op.partTimeEmployees || 0} Part-time)
+- Total Monthly Payroll: ${Number(op.monthlyPayroll || 0).toLocaleString()} RWF
+- Strategic Challenges: ${op.operationalChallenges || 'Not provided'}
+- Growth Goals: ${op.strategicGoals || 'Not provided'}
 
 Your Core Capabilities:
 1. Financial Advisory: Cash flow optimization, expense reduction, inventory balance, and margin improvement.

@@ -35,6 +35,51 @@ class BusinessRepository {
       include: { user: true }
     });
   }
+
+  async findDashboardByUserId(userId) {
+    return prisma.business.findUnique({
+      where: { userId },
+      include: {
+        user: { select: { email: true, phone: true } },
+        products: { orderBy: { createdAt: 'desc' } },
+        sales: { include: { items: true }, orderBy: { createdAt: 'desc' } },
+        stockIntakes: { include: { items: true }, orderBy: { createdAt: 'desc' } },
+        ledgerEntries: { orderBy: { occurredAt: 'desc' } }
+      }
+    });
+  }
+
+  async findPortfolio() {
+    return prisma.business.findMany({
+      include: {
+        user: { select: { email: true, phone: true, isActive: true, is_approved: true } },
+        products: true,
+        sales: { include: { items: true } },
+        stockIntakes: { include: { items: true } },
+        ledgerEntries: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async createLedgerEntry(businessId, data) {
+    return prisma.businessLedgerEntry.create({ data: { ...data, businessId } });
+  }
+
+  async findLedgerEntries(businessId, filters = {}) {
+    const where = { businessId };
+    if (filters.kind) where.kind = filters.kind;
+    if (filters.from || filters.to) {
+      where.occurredAt = {};
+      if (filters.from) where.occurredAt.gte = new Date(filters.from);
+      if (filters.to) where.occurredAt.lte = new Date(`${filters.to}T23:59:59.999Z`);
+    }
+    return prisma.businessLedgerEntry.findMany({ where, orderBy: { occurredAt: 'desc' } });
+  }
+
+  async deleteLedgerEntry(id, businessId) {
+    return prisma.businessLedgerEntry.deleteMany({ where: { id, businessId } });
+  }
 }
 
 export default new BusinessRepository();

@@ -27,6 +27,51 @@ class BusinessController {
       next(error);
     }
   }
+
+  async getDashboard(req, res, next) {
+    try {
+      const dashboard = await businessService.getDashboardByUserId(req.user.id);
+      return successResponse(res, 'Business dashboard retrieved successfully', { dashboard });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getPortfolio(req, res, next) {
+    try {
+      const businesses = await businessService.getPortfolio();
+      return successResponse(res, 'Business portfolio retrieved successfully', { businesses });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getLedger(req, res, next) {
+    try {
+      const entries = await businessService.getLedger(req.user.id, req.query);
+      return successResponse(res, 'Business ledger retrieved successfully', { entries });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createLedgerEntry(req, res, next) {
+    try {
+      const entry = await businessService.createLedgerEntry(req.user.id, req.body);
+      return successResponse(res, 'Ledger entry recorded successfully', { entry }, 201);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteLedgerEntry(req, res, next) {
+    try {
+      await businessService.deleteLedgerEntry(req.user.id, req.params.id);
+      return successResponse(res, 'Ledger entry deleted successfully', {});
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new BusinessController();

@@ -2,6 +2,8 @@ import { Router } from 'express';
 import trainingController from './training.controller.js';
 import { verifyAccessToken } from '../../utils/jwt.js';
 import prisma from '../../config/prisma.js';
+import { authenticate } from '../../middleware/authenticate.js';
+import { authorize } from '../../middleware/authorize.js';
 
 const optionalAuthenticate = async (req, res, next) => {
   try {
@@ -37,23 +39,23 @@ router.get('/', optionalAuthenticate, trainingController.getTrainings);
 router.get('/:id', optionalAuthenticate, trainingController.getTrainingById);
 
 // Training Management (Banker / Admin)
-router.post('/', optionalAuthenticate, trainingController.createTraining);
-router.put('/:id', optionalAuthenticate, trainingController.updateTraining);
-router.delete('/:id', optionalAuthenticate, trainingController.deleteTraining);
+router.post('/', authenticate, authorize('FINANCIAL_INSTITUTION', 'ADMIN'), trainingController.createTraining);
+router.put('/:id', authenticate, authorize('FINANCIAL_INSTITUTION', 'ADMIN'), trainingController.updateTraining);
+router.delete('/:id', authenticate, authorize('FINANCIAL_INSTITUTION', 'ADMIN'), trainingController.deleteTraining);
 
 // SME Enrollment & Attendance Endpoints
-router.post('/:id/enroll', optionalAuthenticate, trainingController.toggleEnrollment);
-router.post('/:id/join', optionalAuthenticate, trainingController.joinTraining);
+router.post('/:id/enroll', authenticate, authorize('BUSINESS'), trainingController.toggleEnrollment);
+router.post('/:id/join', authenticate, authorize('BUSINESS'), trainingController.joinTraining);
 
 // Live Room Synchronization (Attendees, Chat, Status)
-router.patch('/:id/live', optionalAuthenticate, trainingController.syncLiveRoom);
+router.patch('/:id/live', authenticate, trainingController.syncLiveRoom);
 
 // LiveKit Cloud Room Access Token (Presenter & Attendee)
-router.post('/:id/livekit-token', optionalAuthenticate, trainingController.getLiveKitToken);
-router.get('/:id/livekit-token', optionalAuthenticate, trainingController.getLiveKitToken);
+router.post('/:id/livekit-token', authenticate, trainingController.getLiveKitToken);
+router.get('/:id/livekit-token', authenticate, trainingController.getLiveKitToken);
 
 // WebRTC Signaling for Live Screen Streaming (Legacy Fallback)
-router.post('/:id/signal', optionalAuthenticate, trainingController.sendSignal);
-router.get('/:id/signal', optionalAuthenticate, trainingController.getSignals);
+router.post('/:id/signal', authenticate, trainingController.sendSignal);
+router.get('/:id/signal', authenticate, trainingController.getSignals);
 
 export default router;

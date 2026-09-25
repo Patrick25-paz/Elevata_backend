@@ -5,45 +5,32 @@ class CategoryRepository {
    * List all business categories ordered by businessType name.
    */
   async findAll() {
-    try {
-      return await prisma.businessCategory.findMany({
-        orderBy: { businessType: 'asc' }
-      });
-    } catch (err) {
-      console.warn('Prisma businessCategory table query fallback:', err.message);
-      return [];
-    }
+    return prisma.businessCategory.findMany({
+      orderBy: { businessType: 'asc' }
+    });
   }
 
   /**
    * Find a category by unique ID.
    */
   async findById(id) {
-    try {
-      return await prisma.businessCategory.findUnique({
-        where: { id }
-      });
-    } catch (err) {
-      return null;
-    }
+    return prisma.businessCategory.findUnique({
+      where: { id }
+    });
   }
 
   /**
    * Find a category by unique businessType name.
    */
   async findByBusinessType(businessType) {
-    try {
-      return await prisma.businessCategory.findFirst({
-        where: {
-          businessType: {
-            equals: businessType,
-            mode: 'insensitive'
-          }
+    return prisma.businessCategory.findFirst({
+      where: {
+        businessType: {
+          equals: businessType,
+          mode: 'insensitive'
         }
-      });
-    } catch (err) {
-      return null;
-    }
+      }
+    });
   }
 
   /**
@@ -72,20 +59,6 @@ class CategoryRepository {
     return prisma.businessCategory.delete({
       where: { id }
     });
-  }
-
-  /**
-   * Bulk insert default categories.
-   */
-  async createMany(items) {
-    try {
-      return await prisma.businessCategory.createMany({
-        data: items,
-        skipDuplicates: true
-      });
-    } catch (err) {
-      console.warn('Bulk insert skipped or handled individually:', err.message);
-    }
   }
 }
 

@@ -6,6 +6,7 @@ import opportunityRouter from '../modules/opportunities/opportunity.routes.js';
 import inventoryRouter from '../modules/inventory/inventory.routes.js';
 import saleRouter from '../modules/sales/sale.routes.js';
 import trainingRouter from '../modules/trainings/training.routes.js';
+import applicationRouter from '../modules/applications/application.routes.js';
 import userController from '../modules/users/user.controller.js';
 import businessController from '../modules/business/business.controller.js';
 import { authenticate } from '../middleware/authenticate.js';
@@ -22,6 +23,7 @@ router.use('/opportunities', opportunityRouter);
 router.use('/inventory', inventoryRouter);
 router.use('/sales', saleRouter);
 router.use('/trainings', trainingRouter);
+router.use('/applications', applicationRouter);
 
 // Profile endpoints accessible by logged-in users
 router.get('/users/profile', authenticate, userController.getProfile);
@@ -29,6 +31,11 @@ router.get('/users/profile', authenticate, userController.getProfile);
 // Business endpoints restricted to BUSINESS users
 router.get('/business/me', authenticate, authorize('BUSINESS'), businessController.getMyBusiness);
 router.put('/business/profile', authenticate, authorize('BUSINESS'), businessController.updateBusinessProfile);
+router.get('/business/dashboard', authenticate, authorize('BUSINESS'), businessController.getDashboard);
+router.get('/business/ledger', authenticate, authorize('BUSINESS'), businessController.getLedger);
+router.post('/business/ledger', authenticate, authorize('BUSINESS'), businessController.createLedgerEntry);
+router.delete('/business/ledger/:id', authenticate, authorize('BUSINESS'), businessController.deleteLedgerEntry);
+router.get('/portfolio/businesses', authenticate, authorize('FINANCIAL_INSTITUTION', 'ADMIN'), businessController.getPortfolio);
 
 // Financial Institution profile update
 router.put('/financial-institution/profile', authenticate, authorize('FINANCIAL_INSTITUTION', 'ADMIN'), userController.updateFinancialInstitutionProfile);

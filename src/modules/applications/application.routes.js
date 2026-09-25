@@ -1,37 +1,56 @@
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-import { randomUUID } from 'crypto';
 import applicationController from './application.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
 import { AppError } from '../../utils/errors.js';
 
 const router = Router();
-const uploadDirectory = path.resolve(process.cwd(), 'uploads', 'applications');
-fs.mkdirSync(uploadDirectory, { recursive: true });
 
 const allowedMimeTypes = new Set([
   'application/pdf',
   'image/jpeg',
   'image/png',
+  'image/webp',
+  'image/gif',
+  'image/bmp',
+  'image/tiff',
+  'image/heic',
+  'image/heif',
   'text/csv',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  'text/plain',
+  'application/rtf',
+  'text/rtf',
+  'application/json',
+  'application/xml',
+  'text/xml',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'audio/mpeg',
+  'audio/wav',
+  'audio/ogg',
+  'video/mp4',
+  'video/webm'
+]);
+const allowedExtensions = new Set([
+  '.pdf', '.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.tif', '.tiff', '.heic', '.heif',
+  '.csv', '.txt', '.rtf', '.json', '.xml',
+  '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+  '.mp3', '.wav', '.ogg', '.mp4', '.webm'
 ]);
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: uploadDirectory,
-    filename: (_req, file, callback) => {
-      const extension = path.extname(file.originalname).toLowerCase();
-      callback(null, `${randomUUID()}${extension}`);
-    }
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024, files: 12 },
   fileFilter: (_req, file, callback) => {
-    if (!allowedMimeTypes.has(file.mimetype)) {
-      return callback(new AppError('Only PDF, JPG, PNG, CSV, and XLSX documents are accepted.', 400));
+    const extension = path.extname(file.originalname).toLowerCase();
+    if (!allowedMimeTypes.has(file.mimetype) || !allowedExtensions.has(extension)) {
+      return callback(new AppError('Unsupported file. Upload a PDF, image, Office document, CSV, text, audio, or MP4/WebM video up to 10 MB.', 400));
     }
     callback(null, true);
   }

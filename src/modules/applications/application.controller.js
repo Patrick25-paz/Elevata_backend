@@ -1,17 +1,28 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { randomUUID } from 'crypto';
 import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
 import { successResponse } from '../../utils/response.js';
 
 const applicationInclude = {
-  documents: { orderBy: { uploadedAt: 'asc' } },
+  documents: {
+    orderBy: { uploadedAt: 'asc' },
+    select: {
+      id: true,
+      documentType: true,
+      fileName: true,
+      mimeType: true,
+      sizeBytes: true,
+      uploadedAt: true
+    }
+  },
   opportunity: true,
   business: { include: { user: { select: { email: true, phone: true } } } }
 };
 
 const removeUploadedFiles = async (files = []) => {
-  await Promise.all(files.map((file) => fs.unlink(file.path).catch(() => undefined)));
+  await Promise.all(files.filter((file) => file.path).map((file) => fs.unlink(file.path).catch(() => undefined)));
 };
 
 const serializeApplication = (application) => ({
@@ -90,7 +101,8 @@ class ApplicationController {
                 fileName: file.originalname,
                 mimeType: file.mimetype,
                 sizeBytes: file.size,
-                storageKey: file.filename
+                storageKey: `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`,
+                content: file.buffer
               }))
             }
           },
@@ -156,15 +168,22 @@ class ApplicationController {
     const canReview = ['FINANCIAL_INSTITUTION', 'ADMIN'].includes(req.user.role);
     if (!ownsDocument && !canReview) throw new AppError('You cannot access this document.', 403);
 
+    res.setHeader('Content-Type', document.mimeType);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self' data: blob:; media-src 'self' blob:; style-src 'unsafe-inline'; sandbox");
+    const disposition = req.query.download === '1' ? 'attachment' : 'inline';
+    res.setHeader('Content-Disposition', `${disposition}; filename*=UTF-8''${encodeURIComponent(document.fileName)}`);
+    if (document.content) {
+      return res.send(document.content);
+    }
+
+    // Backward compatibility for files uploaded before database-backed storage.
     const filePath = path.resolve(process.cwd(), 'uploads', 'applications', path.basename(document.storageKey));
     try {
       await fs.access(filePath);
     } catch {
       throw new AppError('The stored document file is unavailable.', 404);
     }
-
-    res.setHeader('Content-Type', document.mimeType);
-    res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(document.fileName)}`);
     return res.sendFile(filePath);
   }
 }

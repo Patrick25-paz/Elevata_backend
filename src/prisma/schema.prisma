@@ -16,8 +16,8 @@ enum Role {
 model User {
   id                   String                @id @default(uuid())
   email                String                @unique
-  password     String
-  phone        String
+  password             String
+  phone                String
   role                 Role                  @default(BUSINESS)
   isVerified           Boolean               @default(false)
   isActive             Boolean               @default(true)
@@ -31,27 +31,27 @@ model User {
 }
 
 model Business {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  businessName String
-  ownerName    String
-  businessType String
-  province     String
-  district     String
-  sector       String
-  cell         String
-  village      String
-  knownPlace   String?
-  latitude     Decimal
-  longitude    Decimal
-  operational  Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  products     Product[]
-  sales        SaleTransaction[]
-  stockIntakes InventoryTransaction[]
-  applications FinancingApplication[]
+  id            String                 @id @default(uuid())
+  userId        String                 @unique
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName  String
+  ownerName     String
+  businessType  String
+  province      String
+  district      String
+  sector        String
+  cell          String
+  village       String
+  knownPlace    String?
+  latitude      Decimal
+  longitude     Decimal
+  operational   Json?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  products      Product[]
+  sales         SaleTransaction[]
+  stockIntakes  InventoryTransaction[]
+  applications  FinancingApplication[]
   ledgerEntries BusinessLedgerEntry[]
 }
 
@@ -78,7 +78,7 @@ model FinancialInstitution {
   id                 String   @id @default(uuid())
   userId             String   @unique
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  institutionName   String
+  institutionName    String
   representativeName String
   category           String
   operatingScope     String
@@ -97,53 +97,53 @@ model BusinessCategory {
 }
 
 model Opportunity {
-  id                   String            @id @default(uuid())
+  id                   String                 @id @default(uuid())
   title                String
   institution          String
-  category             String            // e.g. Loan, Grant, Digital Solution, Insurance, Training, Advisory
-  description          String            @db.Text
-  benefits             String?           @db.Text
+  category             String // e.g. Loan, Grant, Digital Solution, Insurance, Training, Advisory
+  description          String                 @db.Text
+  benefits             String?                @db.Text
   deadline             String
   maxFunding           String
-  sectors              String[]          @default([])
+  sectors              String[]               @default([])
   categoryId           String?
-  categoryRel          BusinessCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  minAge               Int               @default(0)
-  minRevenue           Float             @default(0)
-  minHealthScore       Int               @default(0)
-  minReadinessScore    Int               @default(0)
-  registrationRequired Boolean           @default(false)
-  taxCompliance        Boolean           @default(false)
-  collateralRequired   Boolean           @default(false)
-  requiredDocs         String[]          @default([])
-  views                Int               @default(0)
-  saved                Int               @default(0)
-  applicationsCount    Int               @default(0)
-  status               String            @default("Active") // 'Active' | 'Closed'
+  categoryRel          BusinessCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  minAge               Int                    @default(0)
+  minRevenue           Float                  @default(0)
+  minHealthScore       Int                    @default(0)
+  minReadinessScore    Int                    @default(0)
+  registrationRequired Boolean                @default(false)
+  taxCompliance        Boolean                @default(false)
+  collateralRequired   Boolean                @default(false)
+  requiredDocs         String[]               @default([])
+  views                Int                    @default(0)
+  saved                Int                    @default(0)
+  applicationsCount    Int                    @default(0)
+  status               String                 @default("Active") // 'Active' | 'Closed'
   metadata             Json?
   authorId             String?
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
   applications         FinancingApplication[]
 }
 
 model FinancingApplication {
-  id               String                @id @default(uuid())
-  opportunityId    String
-  opportunity      Opportunity           @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  businessId       String
-  business         Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  status           String                @default("Submitted")
-  requestedAmount  Float?
-  purpose          String?
-  termMonths       Int?
-  contactPhone     String?
-  contactEmail     String?
-  notes            String?               @db.Text
-  feedback         String?               @db.Text
-  submittedAt      DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  documents        ApplicationDocument[]
+  id              String                @id @default(uuid())
+  opportunityId   String
+  opportunity     Opportunity           @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  businessId      String
+  business        Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status          String                @default("Submitted")
+  requestedAmount Float?
+  purpose         String?
+  termMonths      Int?
+  contactPhone    String?
+  contactEmail    String?
+  notes           String?               @db.Text
+  feedback        String?               @db.Text
+  submittedAt     DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  documents       ApplicationDocument[]
 
   @@unique([opportunityId, businessId])
   @@index([status])
@@ -151,15 +151,16 @@ model FinancingApplication {
 }
 
 model ApplicationDocument {
-  id             String               @id @default(uuid())
-  applicationId  String
-  application    FinancingApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  documentType   String
-  fileName       String
-  mimeType       String
-  sizeBytes      Int
-  storageKey     String               @unique
-  uploadedAt     DateTime             @default(now())
+  id            String               @id @default(uuid())
+  applicationId String
+  application   FinancingApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  documentType  String
+  fileName      String
+  mimeType      String
+  sizeBytes     Int
+  storageKey    String               @unique
+  content       Bytes?
+  uploadedAt    DateTime             @default(now())
 
   @@index([applicationId])
 }
@@ -171,9 +172,9 @@ model Product {
   name          String
   description   String?   @db.Text
   unit          String    @default("pcs") // e.g. "kgs", "meters", "m²", "l", "dozen", "pcs", "box", "bag", "tons"
-  unitPrice     Float     @default(0)     // Selling price per unit
-  costPrice     Float?    @default(0)     // Cost price per unit
-  stockQuantity Float     @default(0)     // Available quantity in specified unit
+  unitPrice     Float     @default(0) // Selling price per unit
+  costPrice     Float?    @default(0) // Cost price per unit
+  stockQuantity Float     @default(0) // Available quantity in specified unit
   reorderLevel  Float?    @default(5)
   category      String?   @default("General")
   sku           String?
@@ -186,7 +187,7 @@ model SaleTransaction {
   id              String                @id @default(uuid())
   businessId      String?
   business        Business?             @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customer        String                // Buyer / Client Name
+  customer        String // Buyer / Client Name
   customerContact String?
   invoiceNumber   String?
   totalAmount     Float                 @default(0)
@@ -202,8 +203,8 @@ model SaleTransactionItem {
   id          String          @id @default(uuid())
   saleId      String
   sale        SaleTransaction @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  productId   String?         // Optional reference
-  productName String          // Copied snapshot so master product edits do not affect historical sale
+  productId   String? // Optional reference
+  productName String // Copied snapshot so master product edits do not affect historical sale
   unit        String          @default("pcs") // Copied snapshot
   quantity    Float           @default(1)
   unitPrice   Float           @default(0) // Copied snapshot
@@ -215,7 +216,7 @@ model InventoryTransaction {
   id            String                     @id @default(uuid())
   businessId    String?
   business      Business?                  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  supplier      String?                    // Supplier name
+  supplier      String? // Supplier name
   invoiceNumber String?
   totalAmount   Float                      @default(0)
   status        String                     @default("Received") // "Received", "Pending", "Cancelled"
@@ -229,8 +230,8 @@ model InventoryTransactionItem {
   id            String               @id @default(uuid())
   transactionId String
   transaction   InventoryTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  productId     String?              // Optional reference
-  productName   String               // Copied snapshot
+  productId     String? // Optional reference
+  productName   String // Copied snapshot
   unit          String               @default("pcs") // Copied snapshot
   quantity      Float                @default(1)
   unitPrice     Float                @default(0) // Unit purchase cost
@@ -242,8 +243,8 @@ model Training {
   id                String               @id @default(uuid())
   title             String
   description       String               @db.Text
-  date              String               // e.g. "2026-08-22"
-  time              String               // e.g. "10:00 AM - 12:00 PM"
+  date              String // e.g. "2026-08-22"
+  time              String // e.g. "10:00 AM - 12:00 PM"
   durationMinutes   Int                  @default(60)
   speaker           String
   speakerRole       String?
@@ -257,10 +258,10 @@ model Training {
   opportunityTitle  String?
   curriculum        String[]             @default([])
   maxCapacity       Int                  @default(100)
-  materials         Json?                // Array of { title, url, size }
-  attendees         Json?                // Array of TrainingAttendee objects
-  chatMessages      Json?                // Array of TrainingChatMessage objects
-  liveState         Json?                // Live state (isScreenSharing, shareType, currentSlideIndex, screenSnapshot)
+  materials         Json? // Array of { title, url, size }
+  attendees         Json? // Array of TrainingAttendee objects
+  chatMessages      Json? // Array of TrainingChatMessage objects
+  liveState         Json? // Live state (isScreenSharing, shareType, currentSlideIndex, screenSnapshot)
   authorId          String?
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
@@ -268,15 +269,15 @@ model Training {
 }
 
 model TrainingEnrollment {
-  id             String    @id @default(uuid())
+  id             String   @id @default(uuid())
   trainingId     String
-  training       Training  @relation(fields: [trainingId], references: [id], onDelete: Cascade)
-  smeId          String    // SME ID e.g. "sme-1" or business ID
-  userId         String?   // Optional linked User ID
-  enrolledAt     DateTime  @default(now())
-  attended       Boolean   @default(false)
-  completed      Boolean   @default(false)
-  hasCertificate Boolean   @default(false)
+  training       Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  smeId          String // SME ID e.g. "sme-1" or business ID
+  userId         String? // Optional linked User ID
+  enrolledAt     DateTime @default(now())
+  attended       Boolean  @default(false)
+  completed      Boolean  @default(false)
+  hasCertificate Boolean  @default(false)
 
   @@unique([trainingId, smeId])
 }

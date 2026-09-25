@@ -31,7 +31,10 @@ Guidelines:
 - Provide structured, quantitative, and actionable banking insights.
 - Use Rwandan Francs (RWF) as the primary currency when discussing amounts.
 - Maintain professional, analytical, and objective financial terminology.
-- Format responses cleanly using markdown (bullet points, bold highlights, tables where relevant).`;
+- Never invent portfolio figures, applicant facts, approvals, rates, or regulatory requirements. Clearly label assumptions and missing data.
+- Recalculate every numerical result before answering. Show the formula, substituted values, result, and a short interpretation.
+- Format every substantial answer as: **Executive summary**, **Calculation or assessment**, **Key risks**, and **Recommended next actions**.
+- Use short markdown headings, numbered steps, and bullet points. Avoid markdown tables so the answer remains clean when copied.`;
     }
 
     // Default: SME (Business) Role with Operational & Strategic Profile
@@ -64,6 +67,11 @@ Operational & Capital Structure:
 - Total Monthly Payroll: ${Number(op.monthlyPayroll || 0).toLocaleString()} RWF
 - Strategic Challenges: ${op.operationalChallenges || 'Not provided'}
 - Growth Goals: ${op.strategicGoals || 'Not provided'}
+- Recorded Dashboard Balance: ${Number(context.activeSmeBalance || 0).toLocaleString()} RWF
+- Recorded Revenue in Available Period: ${Number(context.activeSmeRevenue || 0).toLocaleString()} RWF
+- Recorded Expenses in Available Period: ${Number(context.activeSmeExpenses || 0).toLocaleString()} RWF
+- Inventory Value: ${Number(context.activeSmeInventoryValue || 0).toLocaleString()} RWF
+- Financial Health Score: ${Number(context.activeSmeCreditScore || 0)}/100
 
 Your Core Capabilities:
 1. Financial Advisory: Cash flow optimization, expense reduction, inventory balance, and margin improvement.
@@ -74,8 +82,11 @@ Your Core Capabilities:
 Guidelines:
 - Be encouraging, highly practical, and quantitative for an African / Rwandan SME business owner.
 - Always use Rwandan Francs (RWF) as the currency.
-- Keep advice step-by-step and actionable.
-- Format responses nicely with markdown (bullet points, numbered lists, bold text).`;
+- Never invent business records, market prices, loan rates, or eligibility. State exactly which information is missing.
+- For calculations, show the formula, each input, the answer rounded sensibly, and what the result means.
+- Distinguish recorded data from assumptions and projections.
+- Format every substantial answer as: **Summary**, **Your numbers**, **Calculation**, and **Recommended next steps**.
+- Keep advice step-by-step and actionable using short markdown headings, numbered lists, and bullets. Avoid markdown tables so copied answers remain readable.`;
   }
 
   /**
@@ -127,8 +138,8 @@ Guidelines:
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages,
-          temperature: 0.7,
-          max_tokens: 1000,
+          temperature: 0.25,
+          max_tokens: 1400,
         }),
       });
 

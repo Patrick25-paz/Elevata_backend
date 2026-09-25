@@ -76,6 +76,12 @@ class BusinessService {
     const lowStock = business.products.filter((item) => item.status === 'Low Stock' || item.status === 'Out of Stock').length;
     const healthScore = Math.max(0, Math.min(100, Math.round(50 + margin * 35 + (business.sales.length ? 10 : 0) - lowStock * 2)));
     const currentBalance = monthlyData.reduce((sum, item) => sum + item.inflow - item.outflow, Number(business.operational?.openingBalance || 0));
+    const currentPeriodRevenue = monthlyData.at(-1)?.revenue || 0;
+    const previousPeriodRevenue = monthlyData.at(-2)?.revenue || 0;
+    const revenueChange = previousPeriodRevenue > 0
+      ? ((currentPeriodRevenue - previousPeriodRevenue) / previousPeriodRevenue) * 100
+      : 0;
+    const healthTrend = revenueChange > 0 ? 'up' : revenueChange < 0 ? 'down' : 'stable';
 
     return {
       id: business.id,
@@ -85,8 +91,8 @@ class BusinessService {
       email: business.user.email,
       phone: business.user.phone,
       healthScore,
-      healthTrend: 'stable',
-      healthTrendPercent: 0,
+      healthTrend,
+      healthTrendPercent: Math.round(Math.abs(revenueChange) * 10) / 10,
       currentBalance,
       borrowingCapacity: Math.max(0, Math.round(Math.max(0, currentBalance) * 0.6)),
       riskRating: healthScore >= 75 ? 'Low' : healthScore >= 55 ? 'Medium' : 'High',

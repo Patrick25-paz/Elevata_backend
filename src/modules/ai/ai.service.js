@@ -2,6 +2,88 @@ import { AppError } from '../../utils/errors.js';
 import businessService from '../business/business.service.js';
 
 class AIService {
+  generateCoreResponse(user, message, context = {}) {
+    const values = [...message.matchAll(/(?:RWF\s*)?(\d[\d,]*(?:\.\d+)?)/gi)]
+      .map((match) => Number(match[1].replace(/,/g, '')))
+      .filter(Number.isFinite);
+    const lowerMessage = message.toLowerCase();
+    const format = (value) => `${Math.round(value).toLocaleString('en-US')} RWF`;
+
+    if (/(gross profit|revenue|cost of goods|margin)/.test(lowerMessage) && values.length >= 2) {
+      const revenue = values[0];
+      const costs = values[1];
+      const profit = revenue - costs;
+      const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+      return `## Summary
+Your calculated gross profit is **${format(profit)}**, representing a **${margin.toFixed(1)}% gross margin**.
+
+## Your numbers
+- Revenue: **${format(revenue)}**
+- Cost of goods or operating cost: **${format(costs)}**
+
+## Calculation
+1. Gross profit = Revenue − Costs
+2. Gross profit = ${format(revenue)} − ${format(costs)}
+3. Gross profit = **${format(profit)}**
+4. Gross margin = (${format(profit)} ÷ ${format(revenue)}) × 100 = **${margin.toFixed(1)}%**
+
+## Recommended next steps
+- Compare this margin with your previous recorded periods.
+- Confirm that payroll, rent, tax, and financing costs are included before treating it as net profit.
+- Record missing expenses in Elevata for a complete profitability assessment.`;
+    }
+
+    if (/(loan|afford|repay|credit)/.test(lowerMessage) && values.length >= 2) {
+      const monthlySales = values[0];
+      const marginPercent = values.find((value) => value > 0 && value <= 100) || 0;
+      const months = [...values].reverse().find((value) => Number.isInteger(value) && value >= 3 && value <= 120) || 12;
+      const monthlyProfit = monthlySales * (marginPercent / 100);
+      const safePayment = monthlyProfit * 0.3;
+      const indicativePrincipal = safePayment * months;
+      return `## Summary
+Using a conservative affordability rule, an indicative repayment ceiling is **${format(safePayment)} per month**.
+
+## Your numbers
+- Monthly sales: **${format(monthlySales)}**
+- Stated profit margin: **${marginPercent}%**
+- Repayment period: **${months} months**
+
+## Calculation
+1. Estimated monthly profit = Sales × Margin = **${format(monthlyProfit)}**
+2. Conservative debt-service allowance = Profit × 30% = **${format(safePayment)}**
+3. Indicative principal before interest = Payment × ${months} = **${format(indicativePrincipal)}**
+
+## Important assumptions
+- This estimate excludes interest, fees, existing debt, taxes, and seasonal cash-flow changes.
+- It is guidance, not a credit approval or bank offer.
+
+## Recommended next steps
+- Add the proposed interest rate and existing monthly debt payments.
+- Review at least six months of recorded cash flow.
+- Keep total repayments below the calculated monthly ceiling.`;
+    }
+
+    const businessName = user?.business?.businessName || context.activeSmeName || 'your business';
+    const revenue = Number(context.activeSmeRevenue || 0);
+    const expenses = Number(context.activeSmeExpenses || 0);
+    const balance = Number(context.activeSmeBalance || 0);
+    return `## Summary
+I can provide a professional assessment for **${businessName}**, but this question needs more numerical detail for a reliable calculation.
+
+## Recorded Elevata data
+- Available-period revenue: **${format(revenue)}**
+- Available-period expenses: **${format(expenses)}**
+- Recorded balance: **${format(balance)}**
+
+## Information needed
+- The exact amount or financial decision you want to evaluate
+- The period involved, such as monthly or annual
+- Relevant rates, costs, repayment term, or target margin
+
+## Recommended next step
+Ask a specific question such as: **“Calculate affordable monthly repayment using 4,000,000 RWF monthly sales, a 25% margin, and a 12-month term.”**`;
+  }
+
   /**
    * Generates a context-aware system prompt tailored for Elevata users (SMEs or Financial Institutions).
    */
@@ -93,13 +175,17 @@ Guidelines:
    * Sends chat message with history to OpenAI and returns AI reply.
    */
   async generateChatResponse({ user, message, history = [], context = {} }) {
-    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_SECRET_KEY;
-    if (!apiKey) {
-      throw new AppError('OpenAI API key is not configured on the server', 500);
-    }
-
     if (!message || typeof message !== 'string' || !message.trim()) {
       throw new AppError('Message text is required', 400);
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_SECRET_KEY;
+    if (!apiKey) {
+      return {
+        reply: this.generateCoreResponse(user, message.trim(), context),
+        model: 'elevata-core',
+        usage: null
+      };
     }
 
     const systemPrompt = this.getSystemPrompt(user, context);

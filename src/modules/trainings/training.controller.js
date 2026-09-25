@@ -167,6 +167,12 @@ class TrainingController {
   async getLiveKitToken(req, res) {
     try {
       const { id } = req.params;
+      if (!livekitService.isConfigured()) {
+        return successResponse(res, 'LiveKit is unavailable; secure WebRTC fallback will be used.', {
+          enabled: false,
+          fallback: 'webrtc'
+        });
+      }
       const { participantName } = req.body || {};
       const isHost = req.user?.role === 'FINANCIAL_INSTITUTION' || req.user?.role === 'ADMIN';
       const resolvedParticipantId = req.user?.id;

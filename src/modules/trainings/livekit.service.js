@@ -2,6 +2,10 @@ import { AccessToken } from 'livekit-server-sdk';
 import { env } from '../../config/env.js';
 
 class LiveKitService {
+  isConfigured() {
+    return Boolean(env.LIVEKIT_API_KEY && env.LIVEKIT_API_SECRET && env.LIVEKIT_URL);
+  }
+
   /**
    * Generates a signed LiveKit AccessToken for a participant joining a training room.
    *
@@ -17,7 +21,7 @@ class LiveKitService {
     const apiSecret = env.LIVEKIT_API_SECRET;
     const livekitUrl = env.LIVEKIT_URL;
 
-    if (!apiKey || !apiSecret || !livekitUrl) {
+    if (!this.isConfigured()) {
       throw new Error('LIVEKIT_API_KEY, LIVEKIT_API_SECRET, and LIVEKIT_URL must be configured');
     }
 

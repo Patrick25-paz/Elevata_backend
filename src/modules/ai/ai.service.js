@@ -93,7 +93,7 @@ Guidelines:
    * Sends chat message with history to OpenAI and returns AI reply.
    */
   async generateChatResponse({ user, message, history = [], context = {} }) {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_SECRET_KEY;
     if (!apiKey) {
       throw new AppError('OpenAI API key is not configured on the server', 500);
     }

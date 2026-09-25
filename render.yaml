@@ -25,6 +25,6 @@ services:
       - key: RESEND_FROM_EMAIL
         value: "Elevata <info@kigalibespoke.com>"
       - key: ALLOWED_ORIGIN
-        value: https://elevata.kigalibespoke.com,https://elevata-pink.vercel.app
+        value: https://elevata.voltaleltd.com,https://elevata.kigalibespoke.com,https://elevata-pink.vercel.app
       - key: CORS_ORIGIN
-        value: https://elevata.kigalibespoke.com,https://elevata-pink.vercel.app
+        value: https://elevata.voltaleltd.com,https://elevata.kigalibespoke.com,https://elevata-pink.vercel.app

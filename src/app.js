@@ -16,6 +16,7 @@ app.use(helmet());
 const rawOrigin = process.env.ALLOWED_ORIGIN || process.env.CORS_ORIGIN || '';
 const origins = [
   ...rawOrigin.split(',').map((origin) => origin.trim()).filter(Boolean),
+  'https://elevata.voltaleltd.com',
   'https://elevata.kigalibespoke.com',
   'https://elevata-pink.vercel.app',
   'http://localhost:5173'

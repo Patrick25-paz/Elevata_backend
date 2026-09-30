@@ -15,5 +15,7 @@ router.delete('/products/:id', productController.deleteProduct);
 
 router.post('/stock-intake', productController.recordStockIntake);
 router.get('/stock-intakes', productController.getStockIntakes);
+router.delete('/stock-intake/:id', productController.deleteStockIntake);
 
 export default router;
+

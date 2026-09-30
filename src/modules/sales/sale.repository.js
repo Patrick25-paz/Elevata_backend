@@ -47,6 +47,7 @@ class SaleRepository {
           paymentStatus: paymentStatus || 'Completed',
           paymentMethod: paymentMethod || 'Cash',
           notes: notes || null,
+          ...(payload.date ? { createdAt: new Date(payload.date) } : {}),
           items: {
             create: items.map(item => ({
               productId: item.productId || null,

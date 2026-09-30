@@ -122,13 +122,13 @@ class ProductService {
    */
   async recordStockIntake(userId, payload) {
     const businessId = await this.getBusinessId(userId);
-    const { supplier, items, invoiceNumber, notes } = payload;
+    const { supplier, items, invoiceNumber, notes, date } = payload;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       throw new AppError('At least one item is required for stock intake', 400);
     }
 
-    return productRepository.createStockIntake(businessId, supplier, items, invoiceNumber, notes);
+    return productRepository.createStockIntake(businessId, supplier, items, invoiceNumber, notes, date);
   }
 
   /**
@@ -138,6 +138,17 @@ class ProductService {
     const businessId = await this.getBusinessId(userId);
     if (!businessId) return [];
     return productRepository.findStockIntakes(businessId);
+  }
+
+  /**
+   * Delete stock intake record
+   */
+  async deleteStockIntake(id) {
+    const existing = await prisma.inventoryTransaction.findUnique({ where: { id } });
+    if (!existing) {
+      throw new AppError('Stock intake record not found', 404);
+    }
+    return productRepository.deleteStockIntake(id);
   }
 }
 

@@ -85,6 +85,18 @@ class ProductController {
       next(error);
     }
   }
+
+  /**
+   * Delete stock intake record
+   */
+  async deleteStockIntake(req, res, next) {
+    try {
+      await productService.deleteStockIntake(req.params.id);
+      return successResponse(res, 'Stock intake deleted successfully', null);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new ProductController();

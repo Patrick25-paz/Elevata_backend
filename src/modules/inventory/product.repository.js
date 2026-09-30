@@ -72,7 +72,7 @@ class ProductRepository {
   /**
    * Create stock intake transaction with copied line items
    */
-  async createStockIntake(businessId, supplier, items, invoiceNumber, notes) {
+  async createStockIntake(businessId, supplier, items, invoiceNumber, notes, date) {
     const totalAmount = items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.unitPrice)), 0);
 
     return prisma.$transaction(async (tx) => {
@@ -84,6 +84,7 @@ class ProductRepository {
           invoiceNumber,
           totalAmount,
           notes,
+          ...(date ? { createdAt: new Date(date) } : {}),
           items: {
             create: items.map(item => ({
               productId: item.productId || null,
@@ -132,6 +133,14 @@ class ProductRepository {
       where: { businessId },
       include: { items: true },
       orderBy: { createdAt: 'desc' }
+    });
+  }
+  /**
+   * Delete a stock intake transaction
+   */
+  async deleteStockIntake(id) {
+    return prisma.inventoryTransaction.delete({
+      where: { id }
     });
   }
 }

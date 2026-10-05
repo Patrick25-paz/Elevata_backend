@@ -186,6 +186,55 @@ class ApplicationController {
     }
     return res.sendFile(filePath);
   }
+
+  async addDocuments(req, res) {
+    const files = req.files || [];
+    try {
+      const business = await prisma.business.findUnique({ where: { userId: req.user.id } });
+      if (!business) throw new AppError('Complete your business profile before managing documents.', 400);
+
+      const application = await prisma.financingApplication.findFirst({
+        where: { id: req.params.id, businessId: business.id }
+      });
+      if (!application) throw new AppError('Application not found or unauthorized.', 404);
+
+      if (!files.length) throw new AppError('No document files provided.', 400);
+
+      let documentTypes = [];
+      try {
+        documentTypes = req.body.documentTypes ? JSON.parse(req.body.documentTypes) : [];
+      } catch {
+        documentTypes = [];
+      }
+
+      await prisma.$transaction(async (tx) => {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const docType = documentTypes[i] || file.originalname;
+          await tx.applicationDocument.create({
+            data: {
+              applicationId: application.id,
+              documentType: docType,
+              fileName: file.originalname,
+              mimeType: file.mimetype,
+              sizeBytes: file.size,
+              storageKey: `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`,
+              content: file.buffer
+            }
+          });
+        }
+      });
+
+      const updated = await prisma.financingApplication.findUnique({
+        where: { id: application.id },
+        include: applicationInclude
+      });
+      return successResponse(res, 'Documents uploaded successfully.', serializeApplication(updated));
+    } catch (error) {
+      await removeUploadedFiles(files);
+      throw error;
+    }
+  }
 }
 
 export default new ApplicationController();

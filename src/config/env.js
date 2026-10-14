@@ -13,6 +13,8 @@ const envSchema = z.object({
   ACCESS_TOKEN_EXPIRES: z.string().default('15m'),
   REFRESH_TOKEN_EXPIRES: z.string().default('7d'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().optional(),
   LIVEKIT_API_KEY: z.string().min(1).optional(),
   LIVEKIT_API_SECRET: z.string().min(1).optional(),
   LIVEKIT_URL: z.string().url().optional()

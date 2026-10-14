@@ -89,10 +89,15 @@ class AuthService {
 
     try {
       const result = await sendEmail({ to: email, subject, html });
-      console.log(`Verification email queued with Resend id: ${result.id || '(unknown)'}`);
+      console.log(`✅ Verification email queued with Resend id: ${result.id || '(unknown)'}`);
     } catch (error) {
-      console.error('Failed to send verification email:', error);
-      throw new AppError('Failed to send verification email. Please check your address or try again.', 500);
+      console.error('❌ Failed to send verification email:', error);
+      const userFriendlyMessage = error.message?.includes('RESEND_API_KEY')
+        ? 'Email service is not configured (RESEND_API_KEY is missing on Render). Please check server environment settings.'
+        : error.message?.includes('domain is not verified')
+        ? 'Email sender domain is not verified on Resend. Verified domain is info@voltaleltd.com.'
+        : `Failed to send verification email: ${error.message || 'Please check your address or try again.'}`;
+      throw new AppError(userFriendlyMessage, 500);
     }
 
     return true;

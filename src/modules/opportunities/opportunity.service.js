@@ -83,7 +83,11 @@ class OpportunityService {
       taxCompliance: Boolean(taxCompliance),
       collateralRequired: Boolean(collateralRequired),
       requiredDocs: Array.isArray(requiredDocs) ? requiredDocs : [],
-      metadata: metadata || null,
+      metadata: {
+        ...(metadata && typeof metadata === 'object' ? metadata : {}),
+        guideDocument: payload.guideDocument || metadata?.guideDocument || null,
+        videoUrl: payload.videoUrl || metadata?.videoUrl || null
+      },
       authorId: user?.id || null,
       views: 0,
       saved: 0,

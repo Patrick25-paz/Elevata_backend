@@ -10,6 +10,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { AppError } from './utils/errors.js';
 
 const app = express();
+// Reload trigger for financial demo endpoints
 
 // 1. Core Security Middlewares
 app.use(helmet());
@@ -38,8 +39,8 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // 3. Body & Cookie Parsers
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
 // 4. App Routes

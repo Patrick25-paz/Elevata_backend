@@ -8,6 +8,8 @@ import saleRouter from '../modules/sales/sale.routes.js';
 import trainingRouter from '../modules/trainings/training.routes.js';
 import applicationRouter from '../modules/applications/application.routes.js';
 import feedbackRouter from '../modules/feedback/feedback.routes.js';
+import complaintRouter from '../modules/complaints/complaint.routes.js';
+import financialDemoRouter from '../modules/financial-services/financialDemo.routes.js';
 import userController from '../modules/users/user.controller.js';
 import businessController from '../modules/business/business.controller.js';
 import { authenticate } from '../middleware/authenticate.js';
@@ -26,6 +28,8 @@ router.use('/sales', saleRouter);
 router.use('/trainings', trainingRouter);
 router.use('/applications', applicationRouter);
 router.use('/feedback', feedbackRouter);
+router.use('/complaints', complaintRouter);
+router.use('/financial-demo', financialDemoRouter);
 
 // Profile endpoints accessible by logged-in users
 router.get('/users/profile', authenticate, userController.getProfile);

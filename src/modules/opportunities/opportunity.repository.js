@@ -4,31 +4,37 @@ class OpportunityRepository {
   async attachPublishers(opportunities) {
     const rows = Array.isArray(opportunities) ? opportunities : [opportunities];
     const authorIds = [...new Set(rows.map((item) => item?.authorId).filter(Boolean))];
-    if (!authorIds.length) return Array.isArray(opportunities) ? rows : opportunities;
 
-    const authors = await prisma.user.findMany({
-      where: { id: { in: authorIds } },
-      select: {
-        id: true,
-        email: true,
-        phone: true,
-        financialInstitution: {
-          select: {
-            institutionName: true,
-            representativeName: true,
-            category: true,
-            website: true,
-            operatingScope: true
+    let authorMap = new Map();
+    if (authorIds.length > 0) {
+      const authors = await prisma.user.findMany({
+        where: { id: { in: authorIds } },
+        select: {
+          id: true,
+          email: true,
+          phone: true,
+          financialInstitution: {
+            select: {
+              institutionName: true,
+              representativeName: true,
+              category: true,
+              website: true,
+              operatingScope: true
+            }
           }
         }
-      }
-    });
-    const authorMap = new Map(authors.map((author) => [author.id, author]));
+      });
+      authorMap = new Map(authors.map((author) => [author.id, author]));
+    }
+
     const enriched = rows.map((item) => {
       if (!item) return item;
       const author = authorMap.get(item.authorId);
+      const meta = item.metadata && typeof item.metadata === 'object' ? item.metadata : {};
       return {
         ...item,
+        guideDocument: item.guideDocument || meta.guideDocument || null,
+        videoUrl: item.videoUrl || meta.videoUrl || null,
         publisher: author ? {
           institutionName: author.financialInstitution?.institutionName || item.institution,
           representativeName: author.financialInstitution?.representativeName || null,

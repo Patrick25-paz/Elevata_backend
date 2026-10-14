@@ -28,6 +28,8 @@ model User {
   updatedAt            DateTime              @updatedAt
   business             Business?
   financialInstitution FinancialInstitution?
+  complaintsSubmitted  Complaint[]           @relation("ComplaintSubmitter")
+  complaintAuditEvents ComplaintAudit[]      @relation("ComplaintAuditActor")
 }
 
 model Business {
@@ -314,4 +316,68 @@ model FeedbackMessage {
   senderOrgName String
   content       String         @db.Text
   createdAt     DateTime       @default(now())
+}
+
+model Complaint {
+  id                         String             @id @default(uuid())
+  referenceNumber            String             @unique
+  submittedById              String
+  submittedBy                User               @relation("ComplaintSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  fullName                   String
+  email                      String
+  phone                      String?
+  organizationName           String?
+  role                       String
+  category                   String
+  relatedInstitution         String?
+  transactionReference       String?
+  subject                    String
+  description                String             @db.Text
+  preferredResolution        String?            @db.Text
+  status                     String             @default("Received")
+  severity                   String             @default("Medium")
+  assignedTo                 String?
+  internalNotes              String?            @db.Text
+  resolutionDetails          String?            @db.Text
+  emailDeliveryStatus        String             @default("Pending")
+  acknowledgementStatus      String             @default("Pending")
+  emailDeliveryError         String?            @db.Text
+  submittedAt                DateTime           @default(now())
+  resolvedAt                 DateTime?
+  updatedAt                  DateTime           @updatedAt
+  evidence                   ComplaintEvidence[]
+  auditEvents                ComplaintAudit[]
+
+  @@index([status])
+  @@index([category])
+  @@index([submittedAt])
+  @@index([emailDeliveryStatus])
+}
+
+model ComplaintEvidence {
+  id           String    @id @default(uuid())
+  complaintId  String
+  complaint    Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  content      Bytes
+  uploadedAt   DateTime  @default(now())
+
+  @@index([complaintId])
+}
+
+model ComplaintAudit {
+  id          String    @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  actorId     String?
+  actor       User?     @relation("ComplaintAuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action      String
+  fromStatus  String?
+  toStatus    String?
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  @@index([complaintId, createdAt])
 }

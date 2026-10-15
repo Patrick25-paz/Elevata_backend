@@ -86,6 +86,11 @@ class FinancialDemoService {
     return data.loans.filter(l => l.smeId === smeId);
   }
 
+  getFiLoans(fiId) {
+    const data = financialDemoStore.getAll();
+    return fiId ? data.loans.filter(l => l.institutionId === fiId) : data.loans;
+  }
+
   getLoanById(loanId) {
     const data = financialDemoStore.getAll();
     const loan = data.loans.find(l => l.id === loanId || l.referenceNumber === loanId);
@@ -120,8 +125,14 @@ class FinancialDemoService {
     if (isNaN(numAmount) || numAmount <= 0) {
       throw new AppError('Repayment amount must be a positive number.', 400);
     }
-    if (!channel || !['Mobile Money', 'Bank Transfer'].includes(channel)) {
-      throw new AppError('Payment channel must be Mobile Money or Bank Transfer.', 400);
+    const normalizedChannel = (channel === 'Airtel Money' || channel === 'Mobile Money')
+      ? 'Mobile Money'
+      : (channel === 'Bank' || channel === 'Bank Transfer')
+      ? 'Bank Transfer'
+      : channel;
+
+    if (!['Mobile Money', 'Bank Transfer'].includes(normalizedChannel)) {
+      throw new AppError('Payment channel must be Mobile Money, Airtel Money, or Bank Transfer.', 400);
     }
 
     // Idempotency check: prevent duplicate submissions
@@ -149,16 +160,19 @@ class FinancialDemoService {
       throw new AppError(`Repayment amount (${numAmount} RWF) exceeds outstanding balance (${loan.outstandingPrincipal} RWF).`, 400);
     }
 
-    const txRef = `REP-${channel === 'Mobile Money' ? 'MOMO' : 'BK'}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const isAirtel = channel === 'Airtel Money' || (paymentDetails?.provider && paymentDetails.provider.toLowerCase().includes('airtel'));
+    const txPrefix = isAirtel ? 'AIRTEL' : (normalizedChannel === 'Mobile Money' ? 'MOMO' : 'BANK');
+    const txRef = `REP-${txPrefix}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
     let providerResult;
-    if (channel === 'Mobile Money') {
+    if (normalizedChannel === 'Mobile Money') {
       const phone = paymentDetails?.phoneNumber || '+250 788 123 456';
+      const defaultProvider = isAirtel ? 'Airtel Money Rwanda' : 'MTN Mobile Money Rwanda';
       providerResult = await momoAdapter.requestToPay({
         amount: numAmount,
         phoneNumber: phone,
         reference: txRef,
-        provider: paymentDetails?.provider || 'MTN Mobile Money Rwanda',
+        provider: paymentDetails?.provider || defaultProvider,
         simulateOutcome,
         relatedSme: `${loan.smeName} (${loan.smeId})`,
         relatedReference: loan.referenceNumber
@@ -168,7 +182,7 @@ class FinancialDemoService {
         amount: numAmount,
         sourceAccount: paymentDetails?.accountNumber || '40032918451',
         destinationAccount: 'BK-LOAN-REPAY-ESCROW',
-        bankName: loan.institutionName,
+        bankName: paymentDetails?.bankName || loan.institutionName,
         reference: txRef,
         isDisbursement: false,
         simulateOutcome,

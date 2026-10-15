@@ -62,6 +62,12 @@ class FinancialDemoController {
     return successResponse(res, 'FI loan applications retrieved.', applications);
   }
 
+  async getFiLoans(req, res) {
+    const fiId = req.query.fiId || null;
+    const loans = financialDemoService.getFiLoans(fiId);
+    return successResponse(res, 'FI loan portfolio retrieved.', loans);
+  }
+
   async underwriteApplication(req, res) {
     const { applicationId } = req.params;
     const result = await financialDemoService.underwriteApplication({

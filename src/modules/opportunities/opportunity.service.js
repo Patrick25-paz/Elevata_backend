@@ -102,7 +102,35 @@ class OpportunityService {
    * Update an opportunity.
    */
   async updateOpportunity(id, payload) {
-    return opportunityRepository.update(id, payload);
+    const existing = await opportunityRepository.findById(id);
+    if (!existing) {
+      const error = new Error('Opportunity not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const {
+      guideDocument,
+      videoUrl,
+      metadata,
+      ...directFields
+    } = payload;
+
+    const updateData = {
+      ...directFields,
+      ...(guideDocument !== undefined || videoUrl !== undefined || metadata !== undefined
+        ? {
+            metadata: {
+              ...(existing.metadata && typeof existing.metadata === 'object' ? existing.metadata : {}),
+              ...(metadata && typeof metadata === 'object' ? metadata : {}),
+              ...(guideDocument !== undefined ? { guideDocument } : {}),
+              ...(videoUrl !== undefined ? { videoUrl } : {})
+            }
+          }
+        : {})
+    };
+
+    return opportunityRepository.update(id, updateData);
   }
 
   /**

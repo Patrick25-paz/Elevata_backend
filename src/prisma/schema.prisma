@@ -32,6 +32,18 @@ model User {
   complaintAuditEvents ComplaintAudit[]      @relation("ComplaintAuditActor")
 }
 
+model EmailVerification {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  code      String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
 model Business {
   id            String                 @id @default(uuid())
   userId        String                 @unique
@@ -135,12 +147,17 @@ model FinancingApplication {
   opportunity     Opportunity           @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
   businessId      String
   business        Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  status          String                @default("Submitted")
+  status          String                @default("Under Review")
   requestedAmount Float?
   purpose         String?
   termMonths      Int?
   contactPhone    String?
   contactEmail    String?
+  receivingAccountType     String?
+  receivingBank             String?
+  receivingAccountNumber   String?
+  receivingMobileProvider  String?
+  receivingMobileNumber    String?
   notes           String?               @db.Text
   feedback        String?               @db.Text
   submittedAt     DateTime              @default(now())

@@ -269,6 +269,47 @@
   ],
   "loans": [
     {
+      "id": "DB-b2101e12-8f09-4703-920b-d9eeaddda648",
+      "applicationId": "b2101e12-8f09-4703-920b-d9eeaddda648",
+      "smeId": "984ce920-01cd-41f5-ac86-4f40821b64ba",
+      "smeName": "KIGALI BUSINESS GROUP",
+      "smeSector": "Agriculture & Agribusiness",
+      "institutionId": "fi-bk",
+      "institutionName": "BANK OF KIGALI",
+      "productName": "SMEs WORKING CAPITAL",
+      "referenceNumber": "LOAN-RW-B2101E12",
+      "totalBorrowed": 5000000,
+      "originalPrincipal": 5000000,
+      "outstandingPrincipal": 5000000,
+      "totalRepaymentsMade": 0,
+      "interestRate": 13.5,
+      "termMonths": 24,
+      "repaymentFrequency": "Monthly",
+      "monthlyInstallment": 238885,
+      "totalAmountDueNow": 238885,
+      "nextRepaymentDueDate": "2026-11-14",
+      "status": "Active",
+      "disbursedAt": "2026-10-15T08:34:22.755Z",
+      "maturityDate": "2028-10-04",
+      "disbursementChannel": "Bank of Kigali",
+      "disbursementReference": "DISB-RW-B2101E12",
+      "disbursementStatus": "Completed",
+      "statement": [
+        {
+          "id": "TXN-STMT-DISB-b2101e12",
+          "date": "2026-10-15",
+          "type": "Disbursement",
+          "description": "Loan facility disbursement via Bank of Kigali to 46837378893",
+          "reference": "DISB-RW-B2101E12",
+          "channel": "Bank of Kigali",
+          "debit": 0,
+          "credit": 5000000,
+          "runningBalance": 5000000,
+          "status": "Completed"
+        }
+      ]
+    },
+    {
       "id": "LOAN-RW-2026-0842",
       "applicationId": "APP-DEMO-001",
       "smeId": "sme-1",
@@ -280,8 +321,8 @@
       "referenceNumber": "LOAN-RW-2026-0842",
       "totalBorrowed": 10000000,
       "originalPrincipal": 10000000,
-      "outstandingPrincipal": 6500000,
-      "totalRepaymentsMade": 3842500,
+      "outstandingPrincipal": 5605000,
+      "totalRepaymentsMade": 4737500,
       "interestRate": 13.5,
       "termMonths": 12,
       "repaymentFrequency": "Monthly",
@@ -295,6 +336,18 @@
       "disbursementReference": "DISB-BK-2026-00192",
       "disbursementStatus": "Completed",
       "statement": [
+        {
+          "id": "TXN-STMT-431415",
+          "date": "2026-10-15",
+          "type": "Repayment",
+          "description": "Loan repayment via Mobile Money (MTN Mobile Money Rwanda)",
+          "reference": "REP-MOMO-2026-2226",
+          "channel": "Mobile Money",
+          "debit": 895000,
+          "credit": 0,
+          "runningBalance": 5605000,
+          "status": "Completed"
+        },
         {
           "id": "TXN-STMT-171982",
           "date": "2026-10-13",
@@ -387,6 +440,33 @@
     }
   ],
   "repayments": [
+    {
+      "id": "TXN-REP-MOMO-2026-2226",
+      "loanId": "LOAN-RW-2026-0842",
+      "loanReference": "LOAN-RW-2026-0842",
+      "smeId": "sme-1",
+      "smeName": "Kigali Tech Supplies Ltd",
+      "institutionId": "fi-bk",
+      "institutionName": "Bank of Kigali (BK Plc)",
+      "amount": 895000,
+      "channel": "Mobile Money",
+      "paymentDetails": {
+        "provider": "MTN Mobile Money Rwanda",
+        "phoneNumber": "+250 788 412 890"
+      },
+      "reference": "REP-MOMO-2026-2226",
+      "status": "Completed",
+      "timestamp": "2026-10-15T08:53:51.416Z",
+      "providerResponse": {
+        "status": "SUCCESSFUL",
+        "financialTransactionId": "MOMO-RW-403011",
+        "transactionReference": "REP-MOMO-2026-2226",
+        "amountDebited": 895000,
+        "currency": "RWF",
+        "message": "USSD prompt confirmed by customer PIN. Wallet debited successfully.",
+        "timestamp": "2026-10-15T08:53:51.398Z"
+      }
+    },
     {
       "id": "TXN-REP-MOMO-2026-4935",
       "loanId": "LOAN-RW-2026-0842",
@@ -612,6 +692,41 @@
     }
   ],
   "apiLogs": [
+    {
+      "id": "LOG-SANDBOX-1792054431400-7GSR",
+      "timestamp": "2026-10-15T08:53:51.400Z",
+      "requestId": "REQ-REP-MOMO-2026-2226",
+      "provider": "MTN Mobile Money Rwanda",
+      "service": "Mobile Money Collection API",
+      "operation": "requestToPay",
+      "method": "POST",
+      "endpoint": "https://api.sandbox.mtn.co.rw/v1/momo/collections/request-to-pay",
+      "durationMs": 308,
+      "statusCode": 200,
+      "status": "Success",
+      "relatedSme": "Kigali Tech Supplies Ltd (sme-1)",
+      "relatedReference": "LOAN-RW-2026-0842",
+      "requestPayload": {
+        "amount": 895000,
+        "currency": "RWF",
+        "externalId": "REP-MOMO-2026-2226",
+        "payer": {
+          "partyIdType": "MSISDN",
+          "partyId": "+250 788 412 890"
+        },
+        "payerMessage": "Elevata Loan Repayment",
+        "payeeNote": "Ref: REP-MOMO-2026-2226"
+      },
+      "responsePayload": {
+        "status": "SUCCESSFUL",
+        "financialTransactionId": "MOMO-RW-403011",
+        "transactionReference": "REP-MOMO-2026-2226",
+        "amountDebited": 895000,
+        "currency": "RWF",
+        "message": "USSD prompt confirmed by customer PIN. Wallet debited successfully.",
+        "timestamp": "2026-10-15T08:53:51.398Z"
+      }
+    },
     {
       "id": "LOG-SANDBOX-1791963426421-Q6NV",
       "timestamp": "2026-10-14T07:37:06.421Z",

@@ -2,6 +2,18 @@ import { z } from 'zod';
 
 // Allowed business types for SMEs
 export const ALLOWED_BUSINESS_TYPES = [
+  'Retail & Wholesale',
+  'Agriculture & Agribusiness',
+  'Food Services & Hospitality',
+  'Manufacturing & Production',
+  'Construction & Real Estate',
+  'Transport & Logistics',
+  'Technology & Digital Services',
+  'Professional Services',
+  'Health & Personal Care',
+  'Education & Training',
+  'Tourism & Creative Industries',
+  'Other Services',
   'Retail Shop',
   'Wholesale',
   'Restaurant',

@@ -5,6 +5,31 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log(' Starting database seeding...');
+
+  const businessTypes = [
+    'Retail & Wholesale',
+    'Agriculture & Agribusiness',
+    'Food Services & Hospitality',
+    'Manufacturing & Production',
+    'Construction & Real Estate',
+    'Transport & Logistics',
+    'Technology & Digital Services',
+    'Professional Services',
+    'Health & Personal Care',
+    'Education & Training',
+    'Tourism & Creative Industries',
+    'Other Services'
+  ];
+
+  for (const businessType of businessTypes) {
+    await prisma.businessCategory.upsert({
+      where: { businessType },
+      update: {},
+      create: { businessType }
+    });
+  }
+
+  console.log(`✅ Business categories available: ${businessTypes.length}`);
   
   const adminEmail = 'admin@elevata.com';
   const existingAdmin = await prisma.user.findUnique({

@@ -16,6 +16,7 @@ router.post('/sme/loans/repay', financialDemoController.repayLoan);
 // FI Underwriting & Disbursement endpoints
 router.get('/fi/overview', financialDemoController.getFiOverview);
 router.get('/fi/applications', financialDemoController.getFiApplications);
+router.get('/fi/loans', financialDemoController.getFiLoans);
 router.patch('/fi/applications/:applicationId/underwrite', financialDemoController.underwriteApplication);
 router.post('/fi/loans/:loanId/disburse', financialDemoController.disburseLoan);
 

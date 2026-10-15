@@ -4,8 +4,8 @@ import { hashPassword, comparePassword } from '../../utils/hash.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../utils/jwt.js';
 import { AppError } from '../../utils/errors.js';
 import { sendEmail } from '../../utils/resend.js';
+import prisma from '../../config/prisma.js';
 
-const verificationStore = new Map();
 const passwordResetStore = new Map();
 
 class AuthService {
@@ -27,11 +27,19 @@ class AuthService {
     // Generate 6-digit verification code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Store in-memory
-    verificationStore.set(email, {
-      code,
-      expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-      verified: false
+    await prisma.emailVerification.upsert({
+      where: { email },
+      update: {
+        code,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        verified: false
+      },
+      create: {
+        email,
+        code,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        verified: false
+      }
     });
 
     console.log(`\n=========================================`);
@@ -113,13 +121,13 @@ class AuthService {
       throw new AppError('Email and verification code are required', 400);
     }
 
-    const verification = verificationStore.get(email);
+    const verification = await prisma.emailVerification.findUnique({ where: { email } });
     if (!verification) {
       throw new AppError('No verification code was sent for this email address', 400);
     }
 
-    if (verification.expiresAt < Date.now()) {
-      verificationStore.delete(email);
+    if (verification.expiresAt < new Date()) {
+      await prisma.emailVerification.delete({ where: { email } });
       throw new AppError('Verification code has expired', 400);
     }
 
@@ -128,10 +136,12 @@ class AuthService {
     }
 
     // Mark as verified, extend validity for registration flow
-    verificationStore.set(email, {
-      code,
-      expiresAt: Date.now() + 30 * 60 * 1000, // 30 minutes to complete registration
-      verified: true
+    await prisma.emailVerification.update({
+      where: { email },
+      data: {
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+        verified: true
+      }
     });
 
     return true;
@@ -148,10 +158,10 @@ class AuthService {
       throw new AppError('Email address is already registered', 409);
     }
 
-    const verification = verificationStore.get(data.email);
-    if (!verification || !verification.verified || verification.expiresAt < Date.now()) {
-      if (verification && verification.expiresAt < Date.now()) {
-        verificationStore.delete(data.email);
+    const verification = await prisma.emailVerification.findUnique({ where: { email: data.email } });
+    if (!verification || !verification.verified || verification.expiresAt < new Date()) {
+      if (verification && verification.expiresAt < new Date()) {
+        await prisma.emailVerification.delete({ where: { email: data.email } });
       }
       throw new AppError('Please verify your email address before registering', 400);
     }
@@ -198,7 +208,7 @@ class AuthService {
     }
 
     // Clean up verification store
-    verificationStore.delete(data.email);
+    await prisma.emailVerification.delete({ where: { email: data.email } }).catch(() => undefined);
 
     // 5. Generate authentication tokens
     const accessToken = generateAccessToken(newUser);

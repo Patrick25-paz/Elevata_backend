@@ -27,6 +27,10 @@ export const errorHandler = (err, req, res, next) => {
     return errorResponse(res, 'Validation failed', formattedErrors, 400);
   }
 
+  if (err.type === 'entity.too.large' || err.message === 'request entity too large') {
+    return errorResponse(res, 'The uploaded payload or document exceeds the allowed size limit (50 MB).', [], 413);
+  }
+
   if (err.name === 'MulterError') {
     const message = err.code === 'LIMIT_FILE_SIZE'
       ? 'Each document must be 10 MB or smaller.'

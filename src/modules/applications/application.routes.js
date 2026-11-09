@@ -78,6 +78,14 @@ router.get(
   applicationController.getApplications
 );
 
+router.post(
+  '/:id/documents',
+  authenticate,
+  authorize('BUSINESS'),
+  upload.array('documents', 12),
+  applicationController.addDocuments
+);
+
 router.get(
   '/:id/documents/:documentId',
   authenticate,

@@ -28,6 +28,20 @@ model User {
   updatedAt            DateTime              @updatedAt
   business             Business?
   financialInstitution FinancialInstitution?
+  complaintsSubmitted  Complaint[]           @relation("ComplaintSubmitter")
+  complaintAuditEvents ComplaintAudit[]      @relation("ComplaintAuditActor")
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  code      String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
 }
 
 model Business {
@@ -133,12 +147,17 @@ model FinancingApplication {
   opportunity     Opportunity           @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
   businessId      String
   business        Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  status          String                @default("Submitted")
+  status          String                @default("Under Review")
   requestedAmount Float?
   purpose         String?
   termMonths      Int?
   contactPhone    String?
   contactEmail    String?
+  receivingAccountType     String?
+  receivingBank             String?
+  receivingAccountNumber   String?
+  receivingMobileProvider  String?
+  receivingMobileNumber    String?
   notes           String?               @db.Text
   feedback        String?               @db.Text
   submittedAt     DateTime              @default(now())
@@ -280,4 +299,102 @@ model TrainingEnrollment {
   hasCertificate Boolean  @default(false)
 
   @@unique([trainingId, smeId])
+}
+
+model FeedbackTicket {
+  id                 String            @id @default(uuid())
+  ticketNumber       String            @unique
+  subject            String
+  category           String
+  priority           String            @default("Medium")
+  status             String            @default("Open")
+  senderId           String
+  senderName         String
+  senderEmail        String
+  senderPhone        String?
+  senderRole         String
+  organizationName   String
+  organizationSector String?
+  assignedAdmin      String?
+  unreadByAdmin      Boolean           @default(true)
+  unreadByUser       Boolean           @default(false)
+  messages           FeedbackMessage[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model FeedbackMessage {
+  id            String         @id @default(uuid())
+  ticketId      String
+  ticket        FeedbackTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId      String
+  senderName    String
+  senderRole    String
+  senderOrgName String
+  content       String         @db.Text
+  createdAt     DateTime       @default(now())
+}
+
+model Complaint {
+  id                         String             @id @default(uuid())
+  referenceNumber            String             @unique
+  submittedById              String
+  submittedBy                User               @relation("ComplaintSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  fullName                   String
+  email                      String
+  phone                      String?
+  organizationName           String?
+  role                       String
+  category                   String
+  relatedInstitution         String?
+  transactionReference       String?
+  subject                    String
+  description                String             @db.Text
+  preferredResolution        String?            @db.Text
+  status                     String             @default("Received")
+  severity                   String             @default("Medium")
+  assignedTo                 String?
+  internalNotes              String?            @db.Text
+  resolutionDetails          String?            @db.Text
+  emailDeliveryStatus        String             @default("Pending")
+  acknowledgementStatus      String             @default("Pending")
+  emailDeliveryError         String?            @db.Text
+  submittedAt                DateTime           @default(now())
+  resolvedAt                 DateTime?
+  updatedAt                  DateTime           @updatedAt
+  evidence                   ComplaintEvidence[]
+  auditEvents                ComplaintAudit[]
+
+  @@index([status])
+  @@index([category])
+  @@index([submittedAt])
+  @@index([emailDeliveryStatus])
+}
+
+model ComplaintEvidence {
+  id           String    @id @default(uuid())
+  complaintId  String
+  complaint    Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  content      Bytes
+  uploadedAt   DateTime  @default(now())
+
+  @@index([complaintId])
+}
+
+model ComplaintAudit {
+  id          String    @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  actorId     String?
+  actor       User?     @relation("ComplaintAuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action      String
+  fromStatus  String?
+  toStatus    String?
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  @@index([complaintId, createdAt])
 }

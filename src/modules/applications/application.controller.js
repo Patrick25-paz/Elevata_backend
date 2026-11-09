@@ -25,19 +25,7 @@ const removeUploadedFiles = async (files = []) => {
   await Promise.all(files.filter((file) => file.path).map((file) => fs.unlink(file.path).catch(() => undefined)));
 };
 
-const normalizeApplicationStatus = (status) => {
-  const value = (status || '').toString().trim();
-  if (!value) return 'Under Review';
-  const lower = value.toLowerCase();
-  if (['submitted', 'pending'].includes(lower)) return 'Submitted';
-  if (['under review', 'under_review', 'in progress', 'review'].includes(lower)) return 'Under Review';
-  if (lower === 'approved') return 'Approved';
-  if (lower === 'disbursed') return 'Disbursed';
-  if (lower === 'completed') return 'Completed';
-  if (['rejected', 'declined', 'denied'].includes(lower)) return 'Rejected';
-  return 'Under Review';
-};
-
+<<<<<<< HEAD
 const parseApplicationNotes = (rawNotes) => {
   if (!rawNotes) return { applicantNotes: '', payments: [] };
   if (typeof rawNotes === 'object' && rawNotes !== null) return rawNotes;
@@ -119,7 +107,7 @@ const serializeApplication = (application) => {
 
   let nextDueDate = parsed.nextDueDate;
   if (!nextDueDate && ['Approved', 'Disbursed'].includes(application.status)) {
-    const due = new Date(application.updatedAt || application.submittedAt || new Date());
+    const due = new Date(application.updatedAt || application.submittedAt);
     due.setDate(due.getDate() + 30);
     nextDueDate = due.toISOString().slice(0, 10);
   }
@@ -127,28 +115,23 @@ const serializeApplication = (application) => {
   return {
     id: application.id,
     opportunityId: application.opportunityId,
-    opportunityTitle: application.opportunity?.title || 'Financing Program',
-    institution: application.opportunity?.institution || 'Financial Institution',
+    opportunityTitle: application.opportunity.title,
+    institution: application.opportunity.institution,
     businessId: application.businessId,
     smeId: application.businessId,
-    smeName: application.business?.businessName || 'Business Applicant',
-    smeSector: application.business?.businessType || 'General Business',
-    status: normalizeApplicationStatus(application.status),
+    smeName: application.business.businessName,
+    smeSector: application.business.businessType,
+    status: application.status,
     requestedAmount: application.requestedAmount,
     purpose: application.purpose,
     termMonths: financialInfo.termMonths || application.termMonths,
-    contactPhone: application.contactPhone || application.business?.user?.phone || '',
-    contactEmail: application.contactEmail || application.business?.user?.email || '',
-    receivingAccountType: application.receivingAccountType,
-    receivingBank: application.receivingBank,
-    receivingAccountNumber: application.receivingAccountNumber,
-    receivingMobileProvider: application.receivingMobileProvider,
-    receivingMobileNumber: application.receivingMobileNumber,
+    contactPhone: application.contactPhone || application.business.user.phone,
+    contactEmail: application.contactEmail || application.business.user.email,
     notes: parsed.applicantNotes || (typeof application.notes === 'string' ? application.notes : ''),
     applicantNotes: parsed.applicantNotes || '',
     feedback: application.feedback || 'Application received. Pending review by the financial institution.',
-    appliedAt: application.submittedAt ? application.submittedAt.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
-    submittedAt: application.submittedAt || new Date(),
+    appliedAt: application.submittedAt.toISOString().slice(0, 10),
+    submittedAt: application.submittedAt,
 
     approvedAmount: financialInfo.approvedAmount,
     interestRate: financialInfo.interestRate,
@@ -163,7 +146,7 @@ const serializeApplication = (application) => {
     disbursementRef: parsed.disbursementRef ?? null,
     payments: parsed.payments || [],
 
-    documents: (application.documents || []).map((document) => ({
+    documents: application.documents.map((document) => ({
       id: document.id,
       documentType: document.documentType,
       name: document.documentType,
@@ -175,6 +158,54 @@ const serializeApplication = (application) => {
     }))
   };
 };
+=======
+const normalizeApplicationStatus = (status) => {
+  const value = (status || '').toString().trim();
+  if (!value) return 'Under Review';
+  const lower = value.toLowerCase();
+  if (['submitted', 'pending', 'under review', 'under_review', 'in progress', 'review'].includes(lower)) return 'Under Review';
+  if (['approved', 'completed'].includes(lower)) return 'Approved';
+  if (lower === 'disbursed') return 'Disbursed';
+  if (['rejected', 'declined', 'denied'].includes(lower)) return 'Rejected';
+  return 'Under Review';
+};
+
+const serializeApplication = (application) => ({
+  id: application.id,
+  opportunityId: application.opportunityId,
+  opportunityTitle: application.opportunity?.title || 'Financing Program',
+  institution: application.opportunity?.institution || 'Financial Institution',
+  businessId: application.businessId,
+  smeId: application.businessId,
+  smeName: application.business?.businessName || 'Business Applicant',
+  smeSector: application.business?.businessType || 'General Business',
+  status: normalizeApplicationStatus(application.status),
+  requestedAmount: application.requestedAmount,
+  purpose: application.purpose,
+  termMonths: application.termMonths,
+  contactPhone: application.contactPhone || application.business?.user?.phone || '',
+  contactEmail: application.contactEmail || application.business?.user?.email || '',
+  receivingAccountType: application.receivingAccountType,
+  receivingBank: application.receivingBank,
+  receivingAccountNumber: application.receivingAccountNumber,
+  receivingMobileProvider: application.receivingMobileProvider,
+  receivingMobileNumber: application.receivingMobileNumber,
+  notes: application.notes,
+  feedback: application.feedback || 'Application received. Pending review by the financial institution.',
+  appliedAt: application.submittedAt ? application.submittedAt.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+  submittedAt: application.submittedAt || new Date(),
+  documents: (application.documents || []).map((document) => ({
+    id: document.id,
+    documentType: document.documentType,
+    name: document.documentType,
+    fileName: document.fileName,
+    mimeType: document.mimeType,
+    sizeBytes: document.sizeBytes,
+    uploadedAt: document.uploadedAt,
+    downloadUrl: `/applications/${application.id}/documents/${document.id}`
+  }))
+});
+>>>>>>> 6ef751e4c43af978575a5a62202a6c594d39018a
 
 class ApplicationController {
   async createApplication(req, res) {
@@ -346,6 +377,7 @@ class ApplicationController {
   }
 
   async updateStatus(req, res) {
+<<<<<<< HEAD
     const allowedStatuses = ['Submitted', 'Under Review', 'Approved', 'Rejected', 'Disbursed', 'Completed'];
     const {
       status,
@@ -356,8 +388,13 @@ class ApplicationController {
       monthlyInstallment,
       disburseNow
     } = req.body;
+    if (!allowedStatuses.includes(status)) throw new AppError('Invalid application status.', 400);
+=======
+    const allowedStatuses = ['Under Review', 'Approved', 'Rejected', 'Disbursed'];
+    const { status, feedback } = req.body;
     const normalizedStatus = normalizeApplicationStatus(status);
     if (!allowedStatuses.includes(normalizedStatus)) throw new AppError('Invalid application status.', 400);
+>>>>>>> 6ef751e4c43af978575a5a62202a6c594d39018a
     if (!feedback?.trim()) throw new AppError('A formal review note is required.', 400);
 
     const existing = await prisma.financingApplication.findUnique({
@@ -423,11 +460,15 @@ class ApplicationController {
 
     const application = await prisma.financingApplication.update({
       where: { id: req.params.id },
+<<<<<<< HEAD
       data: {
-        status: normalizedStatus,
+        status,
         feedback: feedback.trim(),
         notes: JSON.stringify(notesMeta)
       },
+=======
+      data: { status: normalizedStatus, feedback: feedback.trim() },
+>>>>>>> 6ef751e4c43af978575a5a62202a6c594d39018a
       include: applicationInclude
     });
     return successResponse(res, 'Application decision saved.', serializeApplication(application));

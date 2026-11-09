@@ -91,4 +91,17 @@ router.patch(
   applicationController.updateStatus
 );
 
+router.post(
+  '/:id/payments',
+  authenticate,
+  applicationController.createPayment
+);
+
+router.post(
+  '/:id/disburse',
+  authenticate,
+  authorize('FINANCIAL_INSTITUTION', 'ADMIN'),
+  applicationController.disburseApplication
+);
+
 export default router;

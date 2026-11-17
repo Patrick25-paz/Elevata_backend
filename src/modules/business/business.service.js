@@ -1,6 +1,19 @@
 import businessRepository from './business.repository.js';
 import userRepository from '../users/user.repository.js';
 import { AppError } from '../../utils/errors.js';
+import { classifyCashIn, classifyCashOut, intakePaymentMethod, isSettled } from '../../utils/ledgerClassification.js';
+
+/** Only these user fields may leave the server alongside a business record. */
+const toSafeUser = (user) => user ? {
+  id: user.id,
+  email: user.email,
+  phone: user.phone,
+  role: user.role,
+  isVerified: user.isVerified,
+  isActive: user.isActive,
+  isApproved: Boolean(user.is_approved),
+  isPilotApproved: Boolean(user.isPilotApproved)
+} : undefined;
 
 export const DEFAULT_SME_OPERATIONAL_DATA = {
   equipments: [],
@@ -47,25 +60,44 @@ class BusinessService {
       return series.get(key);
     };
 
+    // revenue/expenses are on a profit basis (P&L); inflow/outflow are actual cash movements.
+    const costById = new Map();
+    const costByName = new Map();
+    business.products.forEach((product) => {
+      const cost = Number(product.costPrice || 0);
+      if (cost > 0) {
+        costById.set(product.id, cost);
+        costByName.set(String(product.name || '').trim().toLowerCase(), cost);
+      }
+    });
+    const unitCost = (item) => costById.get(item.productId) || costByName.get(String(item.productName || '').trim().toLowerCase()) || 0;
+
     business.sales.forEach((sale) => {
+      if (sale.paymentStatus === 'Cancelled') return;
       const bucket = bucketFor(sale.createdAt);
       bucket.revenue += sale.totalAmount;
-      bucket.inflow += sale.paymentStatus === 'Cancelled' ? 0 : sale.totalAmount;
+      // Cost of goods sold = units sold x cost price (stock purchases are inventory, not expenses).
+      bucket.expenses += (sale.items || []).reduce((sum, item) => sum + unitCost(item) * Number(item.quantity || 0), 0);
+      if (isSettled(sale.paymentStatus, sale.paymentMethod)) bucket.inflow += sale.totalAmount;
     });
     business.stockIntakes.forEach((intake) => {
-      const bucket = bucketFor(intake.createdAt);
-      bucket.expenses += intake.totalAmount;
-      bucket.outflow += intake.status === 'Cancelled' ? 0 : intake.totalAmount;
+      if (intake.status === 'Cancelled') return;
+      if (isSettled(intake.status === 'Received' ? 'Completed' : intake.status, intakePaymentMethod(intake))) {
+        bucketFor(intake.createdAt).outflow += intake.totalAmount;
+      }
     });
     business.ledgerEntries.forEach((entry) => {
       const bucket = bucketFor(entry.occurredAt);
       if (entry.kind === 'CASH_IN') {
+        // Loans and owner capital are real cash but not income.
         bucket.inflow += entry.amount;
-        bucket.revenue += entry.amount;
-      } else if (entry.kind !== 'OTHER') {
+        if (classifyCashIn(entry.category || entry.description).pnl !== 'none') bucket.revenue += entry.amount;
+      } else if (entry.kind === 'CASH_OUT' || entry.kind === 'EXPENSE') {
+        // Loan repayments, owner drawings and asset purchases are cash out but not expenses.
         bucket.outflow += entry.amount;
-        bucket.expenses += entry.amount;
+        if (entry.kind === 'EXPENSE' || classifyCashOut(entry.category).pnl === 'opex') bucket.expenses += entry.amount;
       }
+      // OTHER (milestones) carry a budget value, not a money movement.
     });
 
     const monthlyData = Array.from(series.values()).sort((a, b) => a.key.localeCompare(b.key)).slice(-12)
@@ -137,6 +169,7 @@ class BusinessService {
 
     return {
       ...business,
+      user: toSafeUser(business.user),
       operational: operationalData
     };
   }
@@ -201,6 +234,7 @@ class BusinessService {
 
     return {
       ...updatedBusiness,
+      user: toSafeUser(updatedBusiness.user),
       operational: finalOperational
     };
   }

@@ -74,9 +74,8 @@ const smeSchema = baseRegisterSchema.extend({
   registrationType: z.literal('SME'),
   businessName: z.string().trim().min(2, 'Business name must be at least 2 characters'),
   ownerName: z.string().trim().min(2, 'Owner name must be at least 2 characters'),
-  businessType: z.enum(ALLOWED_BUSINESS_TYPES, {
-    errorMap: () => ({ message: `Business type must be one of: ${ALLOWED_BUSINESS_TYPES.join(', ')}` })
-  }),
+  // Checked against the admin-managed category list (plus the built-in defaults) in auth.service.
+  businessType: z.string().trim().min(2, 'Business type is required').max(120),
   province: z.string().trim().min(1, 'Province is required'),
   district: z.string().trim().min(1, 'District is required'),
   sector: z.string().trim().min(1, 'Sector is required'),

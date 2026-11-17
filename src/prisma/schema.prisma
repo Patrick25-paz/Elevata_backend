@@ -105,6 +105,11 @@ model FinancialInstitution {
 model BusinessCategory {
   id            String        @id @default(uuid())
   businessType  String        @unique
+  description   String?
+  icon          String?
+  config        Json? // Partial template override, merged over the built-in default (see categoryTemplates.js)
+  isActive      Boolean       @default(true)
+  sortOrder     Int           @default(0)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   opportunities Opportunity[]

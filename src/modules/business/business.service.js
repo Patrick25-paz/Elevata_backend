@@ -1,6 +1,7 @@
 import businessRepository from './business.repository.js';
 import userRepository from '../users/user.repository.js';
 import { AppError } from '../../utils/errors.js';
+import { assertSelectableBusinessType } from '../categories/categoryRules.js';
 import { classifyCashIn, classifyCashOut, intakePaymentMethod, isSettled } from '../../utils/ledgerClassification.js';
 
 /** Only these user fields may leave the server alongside a business record. */
@@ -205,7 +206,9 @@ class BusinessService {
     const coreUpdate = {};
     if (businessName !== undefined) coreUpdate.businessName = businessName;
     if (ownerName !== undefined) coreUpdate.ownerName = ownerName;
-    if (businessType !== undefined) coreUpdate.businessType = businessType;
+    if (businessType !== undefined && businessType !== existingBusiness.businessType) {
+      coreUpdate.businessType = await assertSelectableBusinessType(businessType);
+    }
     if (province !== undefined) coreUpdate.province = province;
     if (district !== undefined) coreUpdate.district = district;
     if (sector !== undefined) coreUpdate.sector = sector;

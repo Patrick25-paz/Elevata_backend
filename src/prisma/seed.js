@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { DEFAULT_TEMPLATES } from '../modules/categories/categoryTemplates.js';
 
 const prisma = new PrismaClient();
 
@@ -21,12 +22,24 @@ async function main() {
     'Other Services'
   ];
 
-  for (const businessType of businessTypes) {
-    await prisma.businessCategory.upsert({
-      where: { businessType },
-      update: {},
-      create: { businessType }
-    });
+  for (const [index, businessType] of businessTypes.entries()) {
+    const defaults = DEFAULT_TEMPLATES[businessType] || {};
+    const existing = await prisma.businessCategory.findUnique({ where: { businessType } });
+    if (!existing) {
+      await prisma.businessCategory.create({
+        data: { businessType, icon: defaults.icon || null, description: defaults.description || null, sortOrder: index }
+      });
+    } else {
+      // Fill in display details without overwriting anything an admin has set.
+      await prisma.businessCategory.update({
+        where: { businessType },
+        data: {
+          icon: existing.icon ?? defaults.icon ?? null,
+          description: existing.description ?? defaults.description ?? null,
+          sortOrder: existing.sortOrder || index
+        }
+      });
+    }
   }
 
   console.log(`✅ Business categories available: ${businessTypes.length}`);

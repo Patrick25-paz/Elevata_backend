@@ -1,10 +1,12 @@
 import categoryService from './category.service.js';
 import { successResponse } from '../../utils/response.js';
 
+const EDITABLE = ['description', 'icon', 'config', 'isActive', 'sortOrder'];
+const editableFields = (body = {}) =>
+  Object.fromEntries(EDITABLE.filter((key) => body[key] !== undefined).map((key) => [key, body[key]]));
+
 class CategoryController {
-  /**
-   * Retrieves all business categories.
-   */
+  /** Public: active categories with resolved templates (used by registration). */
   async getCategories(req, res, next) {
     try {
       const categories = await categoryService.getAllCategories();
@@ -14,38 +16,47 @@ class CategoryController {
     }
   }
 
-  /**
-   * Admin: Creates a new business category.
-   */
+  /** Public: template for one business type (falls back to the generic template). */
+  async getTemplate(req, res, next) {
+    try {
+      const category = await categoryService.getTemplateFor(req.query.businessType);
+      return successResponse(res, 'Category template retrieved successfully', { category });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** Admin: all categories including inactive ones. */
+  async getAdminCategories(req, res, next) {
+    try {
+      const categories = await categoryService.getAllCategories({ includeInactive: true });
+      return successResponse(res, 'Categories retrieved successfully', { categories, defaults: categoryService.getBuiltInDefaults() });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async createCategory(req, res, next) {
     try {
       const { businessType, cat_name } = req.body;
-      const type = businessType || cat_name;
-      const category = await categoryService.createCategory(type);
+      const category = await categoryService.createCategory(businessType || cat_name, editableFields(req.body));
       return successResponse(res, 'Business category created successfully', { category }, 201);
     } catch (error) {
       next(error);
     }
   }
 
-  /**
-   * Admin: Updates an existing business category.
-   */
   async updateCategory(req, res, next) {
     try {
       const { id } = req.params;
       const { businessType, cat_name } = req.body;
-      const type = businessType || cat_name;
-      const category = await categoryService.updateCategory(id, type);
+      const category = await categoryService.updateCategory(id, businessType ?? cat_name, editableFields(req.body));
       return successResponse(res, 'Business category updated successfully', { category });
     } catch (error) {
       next(error);
     }
   }
 
-  /**
-   * Admin: Deletes a business category.
-   */
   async deleteCategory(req, res, next) {
     try {
       const { id } = req.params;

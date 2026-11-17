@@ -6,7 +6,7 @@ class CategoryRepository {
    */
   async findAll() {
     return prisma.businessCategory.findMany({
-      orderBy: { businessType: 'asc' }
+      orderBy: [{ sortOrder: 'asc' }, { businessType: 'asc' }]
     });
   }
 

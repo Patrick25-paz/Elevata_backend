@@ -5,6 +5,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 import { AppError } from '../../utils/errors.js';
 import { sendEmail } from '../../utils/resend.js';
 import prisma from '../../config/prisma.js';
+import { ALLOWED_BUSINESS_TYPES } from './auth.validation.js';
 
 const passwordResetStore = new Map();
 
@@ -191,6 +192,17 @@ class AuthService {
       };
       newUser = await authRepository.registerFinancialInstitution(userData, fiData);
     } else {
+      // Business type must be a built-in default or a category an admin has created.
+      const requestedType = String(data.businessType || '').trim();
+      const isDefaultType = ALLOWED_BUSINESS_TYPES.some((t) => t.toLowerCase() === requestedType.toLowerCase());
+      if (!isDefaultType) {
+        const category = await prisma.businessCategory.findFirst({
+          where: { businessType: { equals: requestedType, mode: 'insensitive' } }
+        });
+        if (!category) {
+          throw new AppError(`Unknown business type "${requestedType}". Choose one from the category list.`, 400);
+        }
+      }
       const businessData = {
         businessName: data.businessName,
         ownerName: data.ownerName,
